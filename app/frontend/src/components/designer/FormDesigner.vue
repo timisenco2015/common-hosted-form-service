@@ -14,6 +14,7 @@
               @click="submitFormSchema"
               color="primary"
               icon
+              :disabled="isSavedButtonDisabled"
               v-bind="attrs"
               v-on="on"
             >
@@ -90,7 +91,7 @@
       </v-col>
     </v-row>
     <v-alert
-      :value="saved || saving"
+      :value="saving || isShowAlert"
       :class="
         saving
           ? NOTIFICATIONS_TYPES.INFO.class
@@ -178,6 +179,9 @@ export default {
   },
   data() {
     return {
+      isShowAlert:false,
+      isSaved:false,
+      isSavedButtonDisabled:false,
       advancedItems: [
         { text: 'Simple Mode', value: false },
         { text: 'Advanced Mode', value: true },
@@ -471,6 +475,9 @@ export default {
     },
     // ----------------------------------------------------------------------------------/ Saving Schema
   },
+  mounted () {
+    this.isSaved = this.saved;
+  },
   created() {
     if (this.formId) {
       this.getFormSchema();
@@ -482,6 +489,18 @@ export default {
     userType() {
       this.reRenderFormIo += 1;
     },
+    isSaved(){
+      this.isShowAlert=!this.isShowAlert;
+    },
+    isShowAlert(){
+      if(this.isShowAlert){
+       
+        setTimeout(function(){
+          this.isShowAlert = false;
+          console.log('------------------------>>>',this.isShowAlert,this.saving);
+        }.bind(this), 50000);
+      }
+    }
   },
 };
 </script>
