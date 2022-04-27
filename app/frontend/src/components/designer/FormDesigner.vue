@@ -181,7 +181,8 @@ export default {
     return {
       isShowAlert:false,
       isSaved:false,
-      isSavedButtonDisabled:false,
+      isSavedButtonDisabled:true,
+      timer:null,
       advancedItems: [
         { text: 'Simple Mode', value: false },
         { text: 'Advanced Mode', value: true },
@@ -375,9 +376,12 @@ export default {
       // Since change is triggered during loading
       this.setDirtyFlag(false);
     },
-    onChangeMethod() {
+    onChangeMethod(_,flags) {
       // Don't call an unnecessary action if already dirty
       if (!this.isDirty) this.setDirtyFlag(true);
+      if(flags){
+        this.isSavedButtonDisabled=false;
+      }
     },
     onRenderMethod() {
       const el = document.querySelector('input.builder-sidebar_search:focus');
@@ -391,6 +395,8 @@ export default {
     async submitFormSchema() {
       try {
         this.saving = true;
+        this.isShowAlert=true;
+        this.isSavedButtonDisabled=false;
         // Once the form is done disable the "leave site/page" messages so they can quit without getting whined at
         await this.setDirtyFlag(false);
 
@@ -463,6 +469,12 @@ export default {
         },
       });
     },
+    alertTimer: function(){
+      clearTimeout(this.timer);
+      this.timer = setTimeout(() => {
+        this.isShowAlert = false;
+      }, 6000);
+    },
     async schemaUpdateExistingDraft() {
       await formService.updateDraft(this.formId, this.draftId, {
         schema: this.formSchema,
@@ -494,11 +506,7 @@ export default {
     },
     isShowAlert(){
       if(this.isShowAlert){
-       
-        setTimeout(function(){
-          this.isShowAlert = false;
-          console.log('------------------------>>>',this.isShowAlert,this.saving);
-        }.bind(this), 50000);
+        this.alertTimer();
       }
     }
   },
