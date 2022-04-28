@@ -50,6 +50,7 @@
                 :copyText="formLink"
                 tooltipText="Copy URL to clipboard"
               />
+              
               <v-tooltip bottom>
                 <template #activator="{ on, attrs }">
                   <v-btn
@@ -66,8 +67,28 @@
                 </template>
                 <span>Open this form</span>
               </v-tooltip>
+              <v-tooltip bottom>
+                <template #activator="{ on, attrs }">
+                  <v-btn
+                    class="mt-n1"
+                    color="primary"
+                    @click="showShareEmail=!showShareEmail"
+                    icon
+                    v-bind="attrs"
+                    v-on="on"
+                  >
+                    <v-icon class="mr-1">email</v-icon>
+                  </v-btn>
+                </template>
+                <span>email link</span>
+              </v-tooltip>
             </template>
           </v-text-field>
+          <v-row no-gutters align="end" justify="center">
+            <v-col>
+              <BaseShareEmail v-if="showShareEmail"/>
+            </v-col>
+          </v-row>
 
           <v-row no-gutters align="end" justify="center">
             <v-col cols="auto">
@@ -130,6 +151,7 @@ export default {
   data() {
     return {
       dialog: false,
+      showShareEmail:false,
       qrLevel: 'M',
       qrSize: 900,
     };
