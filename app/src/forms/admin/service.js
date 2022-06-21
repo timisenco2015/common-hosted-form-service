@@ -145,11 +145,10 @@ const service = {
       await FormComponentsHelpInfo.query(trx).insert(obj);
   
       await trx.commit();
-      
+
       return service.readFormComponentsHelpInfo(obj.id);
       
     } catch(err){
-     
       if (trx) await trx.rollback();
       throw err;
     }
@@ -158,6 +157,7 @@ const service = {
   /**
    * @function readFormComponentsHelpInfo
    * fetch Form Component Help Info by formComponentHelpInfoId
+   * this method is private method to be called by public method
    * @param {String} formComponentHelpInfoId Form Component Help Info Id
    * @returns {Promise} An objection query promise
    */
@@ -181,6 +181,7 @@ const service = {
         publishstatus: JSON.parse(param.publishStatus),
         updatedBy: 'ADMIN'
       });
+
       await trx.commit();
       return await service.readFormComponentsHelpInfo(param.componentId);
     } catch (err) {

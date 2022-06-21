@@ -1,3 +1,5 @@
+const { MockModel} = require('../../../common/dbHelper');
+jest.mock('../../../../src/forms/common/models/tables/formComponentsHelpInfo', () => MockModel);
 const service = require('../../../../src/forms/form/service');
 
 describe('_findFileIds', () => {
@@ -321,3 +323,59 @@ describe('readVersionFields', () => {
 
 });
 
+describe('readVersionFields', () => {
+  const schema = {
+    components: [
+      {
+        type: 'simplefile',
+        key: 'theFirstFile'
+      },
+      {
+        type: 'simpletextfield',
+        key: 'aTextBox'
+      }
+    ]
+  };
+  const data = {
+    submission: {
+      data: {
+        aTextBox: ''
+      }
+    },
+  };
+  const fileIds = service._findFileIds(schema, data);
+  expect(fileIds).toEqual([]);
+});
+
+describe('readVersionFields', () => {
+  const schema = {
+    components: [
+      {
+        type: 'simplefile',
+        key: 'theFirstFile'
+      },
+      {
+        type: 'simpletextfield',
+        key: 'aTextBox'
+      }
+    ]
+  };
+  const data = {
+    submission: {
+      data: {
+        aTextBox: ''
+      }
+    },
+  };
+  const fileIds = service._findFileIds(schema, data);
+  expect(fileIds).toEqual([]);
+});
+
+describe('listFormComponentsHelpInfo', () => {
+  it('should return empty list',  async () => {
+    MockModel.mockResolvedValue([]);
+    await service.listFormComponentsHelpInfo();
+    expect(MockModel.query).toHaveBeenCalledTimes(1);
+    expect(MockModel.modify).toHaveBeenCalledTimes(2);
+  });
+});
