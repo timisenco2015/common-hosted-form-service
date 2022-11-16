@@ -118,16 +118,6 @@ export default {
         }
       }
     },
-    logout({ getters }) {
-      if (getters.keycloakReady) {
-        window.location.replace(
-          getters.createLogoutUrl({
-            redirectUri: `${location.origin}/${Vue.prototype.$config.basePath}`,
-          })
-        );
-      }
-
-    /*
     logoutWithUrl({getters}) {
       window.location.replace(
         getters.createLogoutUrl({
@@ -143,10 +133,7 @@ export default {
           dispatch('logoutWithUrl');
         }
       }
-      */
     },
-
-
 
   },
 };
