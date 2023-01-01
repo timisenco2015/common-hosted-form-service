@@ -89,7 +89,11 @@
         />
       </v-col>
     </v-row>
-
+    <v-row justify="center">
+      <v-col>
+        <HomePageGraphs/>
+      </v-col>
+    </v-row>
     <v-sheet class="help-highlight pa-5 text-center">
       <v-row justify="center">
         <v-col lg="8">
@@ -111,8 +115,13 @@
 <script>
 import { mapGetters } from 'vuex';
 
+import HomePageGraphs from '@/views/form/HomePageGraphs.vue';
+
 export default {
   name: 'About',
+  components: {
+    HomePageGraphs,
+  },
   computed:{
     ...mapGetters('auth', ['authenticated']),
     howToVideoUrl() {

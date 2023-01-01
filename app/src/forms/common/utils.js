@@ -42,8 +42,43 @@ const queryUtils = {
   }
 };
 
+
+const groupFormioComponents = (components, componentTrackerCount) => {
+  if (!components) return;
+
+  components.forEach(function(component, index) {
+
+    if (!component) return;
+
+    if(component.type) {
+      componentTrackerCount.set(component.type, componentTrackerCount.get(component.type) + 1 || 1);
+    }
+
+    if (component.hasOwnProperty('columns') && Array.isArray(component.columns)) {
+      component.columns.forEach(function(column, index) {
+        groupFormioComponents(column.components,componentTrackerCount);
+      });
+    }
+
+    if (component.hasOwnProperty('rows') && Array.isArray(component.rows)) {
+      component.rows.forEach(function(row, index) {
+        row.forEach(function(column, index) {
+          groupFormioComponents(column.components, );
+        });
+      });
+    }
+
+    if (component.hasOwnProperty('components') && Array.isArray(component.components)) {
+      groupFormioComponents(component.components, componentTrackerCount);
+    }
+
+  });
+}
+
+
 module.exports = {
   falsey,
+  groupFormioComponents,
   setupMount,
   queryUtils,
   typeUtils,

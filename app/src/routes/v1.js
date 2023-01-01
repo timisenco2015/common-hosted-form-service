@@ -13,9 +13,11 @@ const rbac = require('../forms/rbac');
 const role = require('../forms/role');
 const user = require('../forms/user');
 const submission = require('../forms/submission');
+const openapi = require('../forms/openapi');
 
 admin.mount(router);
 const bcaddress = bcgeoaddress.mount(router);
+const openAPI = openapi.mount(router);
 const filePath = file.mount(router);
 const formPath = form.mount(router);
 const permissionPath = permission.mount(router);
@@ -44,7 +46,8 @@ router.get('/', (_req, res) => {
       rolePath,
       submissionPath,
       userPath,
-      bcaddress
+      bcaddress,
+      openAPI
     ]
   });
 });

@@ -1,7 +1,7 @@
 import { getField, updateField } from 'vuex-map-fields';
 
 import { IdentityMode, NotificationTypes } from '@/utils/constants';
-import { apiKeyService, formService, rbacService, userService } from '@/services';
+import { apiKeyService, formService, rbacService, userService, openAPIService } from '@/services';
 import { generateIdps, parseIdps } from '@/utils/transformUtils';
 
 
@@ -29,6 +29,7 @@ export default {
   state: {
     apiKey: undefined,
     drafts: [],
+    formioComponentsGrouping:{},
     form: genInitialForm(),
     formFields: [],
     formList: [],
@@ -57,6 +58,7 @@ export default {
     submissionUsers: state => state.submissionUsers,
     userFormPreferences: state => state.userFormPreferences,
     version: state => state.version,
+    formioComponentsGrouping:state => state.formioComponentsGrouping
   },
   mutations: {
     updateField, // vuex-map-fields
@@ -103,6 +105,9 @@ export default {
     SET_FORM_DIRTY(state, isDirty) {
       state.form.isDirty = isDirty;
     },
+    SET_FORMIO_COMPONENTS_GROUPING(state, formioComponentsGrouping) {
+      state.formioComponentsGrouping = formioComponentsGrouping;
+    }
   },
   actions: {
     //
@@ -443,6 +448,17 @@ export default {
       if (!state.form || state.form.isDirty === isDirty) return; // don't do anything if not changing the val (or if form is blank for some reason)
       window.onbeforeunload = isDirty ? () => true : null;
       commit('SET_FORM_DIRTY', isDirty);
+    },
+    async getFormioComponentsGrouping({ commit, dispatch}) {
+      try {
+        const {data}  = await openAPIService.list();
+        commit('SET_FORMIO_COMPONENTS_GROUPING', data);
+      } catch (error) {
+        dispatch('notifications/addNotification', {
+          message: 'An error occurred while trying to fetch the API Key.',
+          consoleError: `Error getting API Key for form: ${error}`,
+        }, { root: true });
+      }
     },
   },
 };
