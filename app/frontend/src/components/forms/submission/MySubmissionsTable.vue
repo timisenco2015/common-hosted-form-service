@@ -113,16 +113,16 @@ export default {
     ]),
     headers() {
       let headers = [
-        { text: 'Confirmation Id', align: 'start', value: 'confirmationId',width: '8%' },
-        { text: 'IDP', align: 'start', value: 'identityProvider', width: '8%'  },
+        { text: 'Confirmation Id', align: 'start', value: 'confirmationId',width: '12%' },
+        { text: 'IDP', align: 'start', value: 'identityProvider', width: '7%'  },
         { text: 'Name', align: 'start', value: 'fullName', width: '8%'  },
-        { text: 'Email', align: 'start', value: 'email', width: '5%'  },
+        { text: 'Email', align: 'start', value: 'email', width: '4%'  },
         { text: 'Status', align: 'start', value: 'status', width: '8%'  },
 
         {
           text: 'Submission Date',
           align: 'start',
-          value: 'submittedDate',
+          value: 'lastEdited',
           sortable: true,
         },
         {
@@ -131,6 +131,7 @@ export default {
           value: 'actions',
           filterable: false,
           sortable: false,
+          width: '13%'
         },
       ];
       if (this.showDraftLastEdited || !this.formId) {
@@ -196,7 +197,7 @@ export default {
             name: s.name,
             email: s.email,
             fullName: s.fullName,
-            identityProvider: s.username+'@'+s.idpCode,
+            identityProvider: s.idpCode,
             permissions: s.permissions,
             status: this.getCurrentStatus(s),
             submissionId: s.formSubmissionId,
