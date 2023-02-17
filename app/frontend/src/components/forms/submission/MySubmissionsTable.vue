@@ -113,8 +113,12 @@ export default {
     ]),
     headers() {
       let headers = [
-        { text: 'Confirmation Id', align: 'start', value: 'confirmationId' },
-        { text: 'Status', align: 'start', value: 'status' },
+        { text: 'Confirmation Id', align: 'start', value: 'confirmationId',width: '8%' },
+        { text: 'IDP', align: 'start', value: 'identityProvider', width: '8%'  },
+        { text: 'Name', align: 'start', value: 'fullName', width: '8%'  },
+        { text: 'Email', align: 'start', value: 'email', width: '5%'  },
+        { text: 'Status', align: 'start', value: 'status', width: '8%'  },
+
         {
           text: 'Submission Date',
           align: 'start',
@@ -130,7 +134,7 @@ export default {
         },
       ];
       if (this.showDraftLastEdited || !this.formId) {
-        headers.splice(2, 0, {
+        headers.splice(5, 0, {
           text: 'Draft Last Edited',
           align: 'start',
           value: 'lastEdited',
@@ -190,6 +194,9 @@ export default {
             confirmationId: s.confirmationId,
             lastEdited: s.draft ? s.updatedAt : undefined,
             name: s.name,
+            email: s.email,
+            fullName: s.fullName,
+            identityProvider: s.username+'@'+s.idpCode,
             permissions: s.permissions,
             status: this.getCurrentStatus(s),
             submissionId: s.formSubmissionId,
