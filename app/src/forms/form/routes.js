@@ -22,9 +22,19 @@ routes.get('/:formId', apiAccess, hasFormPermissions(P.FORM_READ), async (req, r
   await controller.readForm(req, res, next);
 });
 
+routes.post('/:formId/reservation', apiAccess, hasFormPermissions([P.FORM_READ, P.SUBMISSION_READ]), async (req, res, next) => {
+  await controller.exportWithReservation(req, res, next);
+});
+
 routes.get('/:formId/export', apiAccess, hasFormPermissions([P.FORM_READ, P.SUBMISSION_READ]), async (req, res, next) => {
   await controller.export(req, res, next);
 });
+
+routes.get('/:formId/reservation/:reservationId', apiAccess, hasFormPermissions([P.FORM_READ, P.SUBMISSION_READ]), async (req, res, next) => {
+  await controller.readReservation(req, res, next);
+});
+
+
 
 routes.get('/:formId/options', async (req, res, next) => {
   await controller.readFormOptions(req, res, next);

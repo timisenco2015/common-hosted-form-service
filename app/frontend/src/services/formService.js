@@ -291,30 +291,6 @@ export default {
     return appAxios().get(`${ApiRoutes.SUBMISSION}/${submissionId}/edits`);
   },
 
-  /**
-   * @function exportSubmissions
-   * Get the export file for a range of form submittions
-   * @param {string} formId The form uuid
-   * @param {Array} preference selected fields by the user
-   * @param {string} format The export file format csv or json
-   * @param {object} options options for the export (eg: minDate, maxDate, deleted, drafts)
-   * @returns {Promise} An axios response
-   */
-  exportSubmissions(formId, format,template,versionSelected, preference, options = {}) {
-    return appAxios().get(`${ApiRoutes.FORMS}/${formId}/export`,
-      {
-        params: {
-          format: format,
-          template:template,
-          version:versionSelected,
-          type: 'submissions',
-          preference:preference,
-          ...options
-        },
-        responseType: 'blob'
-      }
-    );
-  },
 
 
   //
@@ -411,5 +387,42 @@ export default {
   */
   async getFCProactiveHelpImageUrl(componentId) {
     return appAxios().get(`${ApiRoutes.FORMS}/formcomponents/proactivehelp/imageUrl/${componentId}`);
+  },
+  async createReservation(formId, format, template, versionSelected, preference, options = {}) {
+    return appAxios().post(`${ApiRoutes.FORMS}/${formId}/reservation`, {}, {
+      params: {
+        format: format,
+        template:template,
+        formId: formId,
+        version: versionSelected,
+        type: 'submissions',
+        preference:preference,
+        ...options
+      }
+    });
+  },
+
+  /**
+  * @function exportSubmissions
+  * Get the export file for a range of form submittions
+  * @param {string} formId The form uuid
+  * @param {Array} preference selected fields by the user
+  * @param {string} format The export file format csv or json
+  * @param {object} options options for the export (eg: minDate, maxDate, deleted, drafts)
+  * @returns {Promise} An axios response
+  */
+  exportSubmissions(formId, format,template,preference, options = {}) {
+    return appAxios().get(`${ApiRoutes.FORMS}/${formId}/export`,
+      {
+        params: {
+          format: format,
+          template:template,
+          type: 'submissions',
+          preference:preference,
+          ...options
+        },
+        responseType: 'blob'
+      }
+    );
   },
 };

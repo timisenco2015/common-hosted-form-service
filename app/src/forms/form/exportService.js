@@ -1,43 +1,21 @@
-const { Model } = require('objection');
 const Problem = require('api-problem');
+const { transforms } = require('json2csv');
+const { v4:uuidv4 } = require('uuid');
+const { AsyncParser } = require('@json2csv/node');
+const { StreamParser } = require('@json2csv/plainjs');
+const storageService = require('../file/storage/storageService');
+
 const {flattenComponents, unwindPath, submissionHeaders} = require('../common/utils');
-const { Form, FormVersion } = require('../common/models');
-const {  transforms } = require('json2csv');
-const { Parser } = require('json2csv');
+const {
+  Form,
+  FormVersion,
+  SubmissionsData
+} = require('../common/models');
+
+const fileReservation = require('./fileReservation');
+const exportSubmissionsExtration = require('./exportSubmissions');
 
 
-class SubmissionData extends Model {
-  static get tableName() {
-    return 'submissions_data_vw';
-  }
-
-  static get modifiers() {
-    return {
-      filterCreatedAt(query, minDate, maxDate) {
-        if (minDate && maxDate) {
-          query.whereBetween('createdAt', [minDate, maxDate]);
-        } else if (minDate) {
-          query.where('createdAt', '>=', minDate);
-        } else if (maxDate) {
-          query.where('createdAt', '<=', maxDate);
-        }
-      },
-      filterDeleted(query, value) {
-        if (!value) {
-          query.where('deleted', false);
-        }
-      },
-      filterDrafts(query, value) {
-        if (!value) {
-          query.where('draft', false);
-        }
-      },
-      orderDefault(builder) {
-        builder.orderBy('createdAt', 'DESC');
-      }
-    };
-  }
-}
 
 const EXPORT_TYPES = Object.freeze({
   submissions: 'submissions',
@@ -82,9 +60,11 @@ const service = {
      * see: https://github.com/kaue/jsonexport
      */
     let formSchemaheaders = metaHeaders.concat(fieldNames);
-    let flattenSubmissionHeaders = Array.from(submissionHeaders(data[0]));
-    let t = formSchemaheaders.concat(flattenSubmissionHeaders.filter((item) => formSchemaheaders.indexOf(item) < 0));
-    return t;
+    if (Array.isArray(data) && data.length > 0) {
+      let flattenSubmissionHeaders = Array.from(submissionHeaders(data[0]));
+      formSchemaheaders = formSchemaheaders.concat(flattenSubmissionHeaders.filter((item) => formSchemaheaders.indexOf(item) < 0));
+    }
+    return formSchemaheaders;
   },
 
   _exportType: (params = {}) => {
@@ -124,6 +104,13 @@ const service = {
     return Form.query().findById(formId).throwIfNotFound();
   },
 
+  _getFormVersionId:(formId, version) => {
+    return FormVersion.query()
+      .select('id')
+      .where('formId', formId)
+      .where('version', version);
+  },
+
   _getData: async(exportType,formVersion,form, params = {}) => {
     if (EXPORT_TYPES.submissions === exportType) {
       return service._getSubmissions(form, params,formVersion);
@@ -140,7 +127,7 @@ const service = {
 
     if (EXPORT_TYPES.submissions === exportType) {
       if (EXPORT_FORMATS.csv === exportFormat) {
-        return await service._formatSubmissionsCsv(form, formatted,exportTemplate, columns, version);
+        return await service._formatSubmissionsCsv(form, formatted,exportTemplate, columns, version, false);
       }
       if (EXPORT_FORMATS.json === exportFormat) {
         return await service._formatSubmissionsJson(form, formatted);
@@ -149,37 +136,42 @@ const service = {
     throw new Problem(422, { detail: 'Could not create an export for this form. Invalid options provided' });
   },
 
+
+  _formatDataWithReservation: async (exportTemplate, form, data = {}, columns, version, currentUser) => {
+    const formatted = data.map(obj => {
+      const { submission, ...form } = obj;
+      return Object.assign({ form: form }, submission);
+    });
+
+    return await service._formatSubmissionsCsvWithReservation(form, formatted,exportTemplate, columns, version, currentUser);
+
+  },
+
   _getSubmissions: async (form, params, version) => {
     let preference = params.preference?JSON.parse(params.preference):undefined;
     // params for this export include minDate and maxDate (full timestamp dates).
-    let submissionData = await SubmissionData.query()
-      .column(service._submissionsColumns(form, params))
-      .where('formId', form.id)
-      .where('version', version)
-      .modify('filterCreatedAt', preference&&preference.minDate, preference&&preference.maxDate)
-      .modify('filterDeleted', params.deleted)
-      .modify('filterDrafts', params.drafts)
-      .modify('orderDefault');
-    if(params.columns){
-      for(let index in submissionData) {
-        let keys = Object.keys(submissionData[index].submission);
-        for(let key of keys) {
-          if(Array.isArray(params.columns) && !params.columns.includes(key)) {
-            delete submissionData[index].submission[key];
-          }
-        }
-      }
-    } else {
-      for(let index in submissionData) {
-        let keys = Object.keys(submissionData[index].submission);
-        for(let key of keys) {
-          if(key==='submit') {
-            delete submissionData[index].submission[key];
-          }
-        }
-      }
+    if(version) {
+      let submissionData = await SubmissionsData.query()
+        .column(service._submissionsColumns(form, params))
+        .where('formId', form.id)
+        .where('version', version)
+        .modify('filterCreatedAt', preference&&preference.minDate, preference&&preference.maxDate)
+        .modify('filterDeleted', params.deleted)
+        .modify('filterDrafts', params.drafts)
+        .modify('orderDefault');
+      return submissionData;
     }
-    return submissionData;
+    else {
+      let submissionData = await SubmissionsData.query()
+        .column(service._submissionsColumns(form, params))
+        .where('formId', form.id)
+        .modify('filterCreatedAt', preference&&preference.minDate, preference&&preference.maxDate)
+        .modify('filterDeleted', params.deleted)
+        .modify('filterDrafts', params.drafts)
+        .modify('orderDefault');
+      return submissionData;
+    }
+
   },
 
   _formatSubmissionsJson: (form,data) => {
@@ -187,7 +179,7 @@ const service = {
       data: data,
       headers: {
         'content-disposition': `attachment; filename="${service._exportFilename(form, EXPORT_TYPES.submissions, EXPORT_FORMATS.json)}"`,
-        'content-type': 'text/json'
+        'content-type': 'application/json'
       }
     };
   },
@@ -196,11 +188,11 @@ const service = {
     try {
       switch(exportTemplate) {
         case 'flattenedWithBlankOut':
-          return service. _flattenSubmissionsCSVExport(form, data, columns, false, version);
+          return service._submissionsCSVExport(form, data, columns, false, version);
         case 'flattenedWithFilled':
-          return service. _flattenSubmissionsCSVExport(form, data, columns, true, version);
+          return service._submissionsCSVExport(form, data, columns, true, version);
         case 'unflattened':
-          return service. _unFlattenSubmissionsCSVExport(form, data, columns, version);
+          return service._submissionsCSVExport(form, data, columns, version);
         default:
           // code block
       }
@@ -209,37 +201,51 @@ const service = {
       throw new Problem(500, { detail: `Could not make a csv export of submissions for this form. ${e.message}` });
     }
   },
-  _flattenSubmissionsCSVExport: async(form, data, columns, blankout, version) => {
-    let pathToUnwind = await unwindPath(data);
-    let headers = await service._buildCsvHeaders(form, data, version, columns);
 
-    const opts = {
-      transforms: [
-        transforms.unwind({ paths: pathToUnwind, blankOut: blankout }),
-        transforms.flatten({ object: true, array: true, separator: '.'}),
-      ],
-      fields: headers
-    };
-    const parser = new Parser(opts);
-    const csv = parser.parse(data);
-    return {
-      data: csv,
-      headers: {
-        'content-disposition': `attachment; filename="${service._exportFilename(form, EXPORT_TYPES.submissions, EXPORT_FORMATS.csv)}"`,
-        'content-type': 'text/csv'
+  _formatSubmissionsCsvWithReservation: async (form, data, exportTemplate, columns, version, currentUser) => {
+    try {
+      switch(exportTemplate) {
+        case 'flattenedWithBlankOut':
+          return service._submissionsCSVExportWithReservation(form, data, columns, false, version,true, currentUser);
+        case 'flattenedWithFilled':
+          return service._submissionsCSVExportWithReservation(form, data, columns, true, version, true, currentUser);
+        case 'unflattened':
+          return service._submissionsCSVExportWithReservation(form, data, columns,false, version, false, currentUser);
+        default:
+          // code block
       }
-    };
+    }
+    catch (e) {
+      throw new Problem(500, { detail: `Could not make a csv export of submissions for this form. ${e.message}` });
+    }
   },
-  _unFlattenSubmissionsCSVExport: async(form, data, columns, version) => {
+
+
+  _submissionsCSVExport: async(form, data, columns, blankout, version, unwind) => {
     let headers = await service._buildCsvHeaders(form, data, version, columns);
-    const opts = {
-      transforms: [
-        transforms.flatten({ object: true, array: true, separator: '.'}),
-      ],
-      fields: headers
-    };
-    const parser = new Parser(opts);
-    const csv = parser.parse(data);
+    let opts;
+    if(unwind) {
+      let pathToUnwind = await unwindPath(data);
+      opts = {
+        transforms: [
+          transforms.unwind({ paths: pathToUnwind, blankOut: blankout }),
+          transforms.flatten({ object: true, array: true, separator: '.'}),
+        ],
+        fields: headers
+      };
+    }
+    else {
+      opts = {
+        transforms: [
+          transforms.flatten({ object: true, array: true, separator: '.'}),
+        ],
+        fields: headers
+      };
+    }
+
+    const parser = new AsyncParser(opts, {}, {});
+    const csv = await parser.parse(data).promise();
+
     return {
       data: csv,
       headers: {
@@ -248,6 +254,68 @@ const service = {
       }
     };
   },
+
+  _submissionsCSVExportWithReservation: async(form, data, columns, blankout, version, unwind, currentUser) => {
+    let headers = await service._buildCsvHeaders(form, data, version, columns);
+    let opts;
+    if(unwind) {
+      let pathToUnwind = await unwindPath(data);
+      opts = {
+        transforms: [
+          transforms.unwind({ paths: pathToUnwind, blankOut: blankout }),
+          transforms.flatten({ object: true, array: true, separator: '.'}),
+        ],
+        fields: headers
+      };
+    }
+    else {
+      opts = {
+        transforms: [
+          transforms.flatten({ object: true, array: true, separator: '.'}),
+        ],
+        fields: headers
+      };
+    }
+
+    const parser = new StreamParser(opts, {objectMode:true});
+
+    let csv = '';
+    parser.onEnd = ()=>service._JSON2CSVStreamParserCallBack(csv, form.id,form.name, version,currentUser);
+    parser.onData = (chunk) => (csv += chunk.toString());
+    parser.pushLine(data);
+    parser.onEnd();
+  },
+
+  _createReservationForSubmissionExport: async(formId, version, currentUser) => {
+    let formVersions = await service._getFormVersionId(formId, version);
+    let fRV;
+    let exportSubmissions =  await exportSubmissionsExtration.listSubmissionsExports({formId:formId, formVersions:formVersions[0].id});
+    if (exportSubmissions.length>0) {
+      fRV = await fileReservation.readReservation(exportSubmissions[0].reservationId);
+    }
+    if(exportSubmissions.length===0) {
+      fRV = await fileReservation.createReservation(currentUser);
+      exportSubmissions = await exportSubmissionsExtration.createSubmissionsExport(formId, formVersions[0].id, fRV.id, currentUser);
+    }
+    return fRV;
+  },
+
+  _JSON2CSVStreamParserCallBack: async(csv, formId, formName, version, currentUser)=> {
+    let fRV, storage;
+    let fileId = uuidv4();
+    let formVersions = await service._getFormVersionId(formId, version);
+    const exportSubmissions =  await exportSubmissionsExtration.listSubmissionsExports({formId:formId, formVersions:formVersions[0].id});
+    if(exportSubmissions&&exportSubmissions.length>0) {
+      fRV = await fileReservation.readReservation(exportSubmissions[0].reservationId);
+      fileId = fRV&&fRV.fileId!==null?fRV.fileId:fileId;
+    }
+    storage = await storageService.uploadData({originalName:formName+'.csv', id:fileId}, csv);
+    if(storage) {
+      await fileReservation.updateReservation(fRV.id, fileId, currentUser);
+      await exportSubmissionsExtration.updateSubmissionsExport(exportSubmissions[0].id, currentUser);
+    }
+  },
+
   _readLatestFormSchema: (formId, version) => {
     return FormVersion.query()
       .select('schema')
@@ -265,14 +333,23 @@ const service = {
     const exportType = service._exportType(params);
     const exportFormat = service._exportFormat(params);
     const exportTemplate = params.template?params.template:'flattenedWithFilled';
-    const columns = params.columns?params.columns:undefined;
-    const version = params.version?parseInt(params.version):1;
     const form = await service._getForm(formId);
-    const data = await service._getData(exportType, version, form, params);
-    const result = await service._formatData(exportFormat, exportType,exportTemplate, form, data, columns, version);
+    const data = await service._getData(exportType, params.version, form, params);
+    const result = await service._formatData(exportFormat, exportType,exportTemplate, form, data, params.columns, params.version);
 
     return { data: result.data, headers: result.headers };
-  }
+  },
+
+  exportWithReservation: async (formId, currentUser, params = {}) => {
+    const exportType = service._exportType(params);
+    const exportTemplate = params.template?params.template:'flattenedWithFilled';
+    const columns = params.columns?params.columns:undefined;
+    const form = await service._getForm(formId);
+    const data = await service._getData(exportType, params.version, form, params);
+    const reservation = await service._createReservationForSubmissionExport(formId, params.version, currentUser);
+    service._formatDataWithReservation(exportTemplate, form, data, columns, params.version, currentUser);
+    return reservation;
+  },
 
 };
 

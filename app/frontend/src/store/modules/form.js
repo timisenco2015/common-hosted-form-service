@@ -1,7 +1,7 @@
 import { getField, updateField } from 'vuex-map-fields';
 
 import { IdentityMode, NotificationTypes } from '@/utils/constants';
-import { apiKeyService, formService, rbacService, userService} from '@/services';
+import { apiKeyService, fileService, formService, rbacService, userService} from '@/services';
 import { generateIdps, parseIdps } from '@/utils/transformUtils';
 
 
@@ -28,6 +28,10 @@ export default {
   namespaced: true,
   state: {
     apiKey: undefined,
+    downloadedFile: {
+      data: null,
+      headers: null,
+    },
     drafts: [],
     form: genInitialForm(),
     formFields: [],
@@ -40,6 +44,7 @@ export default {
     },
     permissions: [],
     submissionList: [],
+    formVersionsubmissionList: [],
     submissionUsers: [],
     userFormPreferences: {},
     version: {},
@@ -50,6 +55,7 @@ export default {
   getters: {
     getField, // vuex-map-fields
     apiKey: state => state.apiKey,
+    downloadedFile: state => state.downloadedFile,
     drafts: state => state.drafts,
     form: state => state.form,
     formFields: state => state.formFields,
@@ -57,6 +63,7 @@ export default {
     formSubmission: state => state.formSubmission,
     permissions: state => state.permissions,
     submissionList: state => state.submissionList,
+    formVersionsubmissionList: state => state.formVersionsubmissionList,
     submissionUsers: state => state.submissionUsers,
     userFormPreferences: state => state.userFormPreferences,
     fcNamesProactiveHelpList: state => state.fcNamesProactiveHelpList, // Form Components Proactive Help Group Object
@@ -96,6 +103,15 @@ export default {
     },
     SET_SUBMISSIONLIST(state, submissions) {
       state.submissionList = submissions;
+    },
+    SET_VERSION_SUBMISSIONLIST(state, submissions) {
+      state.formVersionsubmissionList = submissions;
+    },
+    SET_DOWNLOADEDFILE_DATA(state, downloadedFile) {
+      state.downloadedFile.data = downloadedFile;
+    },
+    SET_DOWNLOADEDFILE_HEADERS(state, headers) {
+      state.downloadedFile.headers = headers;
     },
     SET_SUBMISSIONUSERS(state, users) {
       state.submissionUsers = users;
@@ -384,6 +400,18 @@ export default {
         }, { root: true });
       }
     },
+    async fetchFormVersionSubmissions({ commit, dispatch}, { formId, formVersionId, deletedOnly = false, createdBy = '' }) {
+      try {
+        commit('SET_VERSION_SUBMISSIONLIST', []);
+        const response = await formService.listSubmissions(formId, { deleted: deletedOnly, createdBy: createdBy, formVersionId:formVersionId  });
+        commit('SET_VERSION_SUBMISSIONLIST', response.data);
+      } catch (error) {
+        dispatch('notifications/addNotification', {
+          message: 'An error occurred while fetching submissions for this form.',
+          consoleError: `Error getting submissions for ${formId} and ${formVersionId}: ${error}`,
+        }, { root: true });
+      }
+    },
     async fetchVersion({ commit, dispatch }, { formId, versionId }) {
       try {
         // TODO: need a better 'set back to initial state' ability
@@ -497,6 +525,20 @@ export default {
       if (!state.form || state.form.isDirty === isDirty) return; // don't do anything if not changing the val (or if form is blank for some reason)
       window.onbeforeunload = isDirty ? () => true : null;
       commit('SET_FORM_DIRTY', isDirty);
+    },
+    async downloadFile({ commit, dispatch }, fileId) {
+      try {
+        commit('SET_DOWNLOADEDFILE_DATA', null);
+        commit('SET_DOWNLOADEDFILE_HEADERS', null);
+        const response = await fileService.getFile(fileId);
+        commit('SET_DOWNLOADEDFILE_DATA', response.data);
+        commit('SET_DOWNLOADEDFILE_HEADERS', response.headers);
+      } catch(error) {
+        dispatch('notifications/addNotification', {
+          message: 'An error occurred while downloading file',
+          consoleError: 'Error downloading file',
+        }, { root: true });
+      }
     },
   },
 };

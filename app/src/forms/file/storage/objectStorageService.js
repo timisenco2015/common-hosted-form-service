@@ -10,7 +10,8 @@ const errorToProblem = require('../../../components/errorToProblem');
 const log = require('../../../components/log')(module.filename);
 
 const SERVICE = 'ObjectStorage';
-const TEMP_DIR = 'uploads';
+const UPLOAD_DIR = 'uploads';
+const TEMP_DIR = 'temp';
 const Delimiter = '/';
 
 class ObjectStorageService {
@@ -30,6 +31,7 @@ class ObjectStorageService {
       accessKeyId: this._accessKeyId,
       secretAccessKey: this._secretAccessKey,
       s3ForcePathStyle: true,
+      region:'us-east-1',
       params: {
         Bucket: this._bucket
       }
@@ -60,25 +62,47 @@ class ObjectStorageService {
 
   async uploadFile(fileStorage) {
     try {
-
       const fileContent = fs.readFileSync(fileStorage.path);
 
-      // uploads can go to a 'holding' area, we can shuffle it later if we want to.
-      const key = this._join(this._key, TEMP_DIR, fileStorage.id);
+      return await this.upload(fileStorage, UPLOAD_DIR, fileContent);
+    } catch (e) {
+      errorToProblem(SERVICE, e);
+    }
+  }
 
-      const params = {
-        Bucket: this._bucket,
-        Key: key,
-        Body: fileContent,
-        Metadata: {
-          'name': fileStorage.originalName,
-          'id': fileStorage.id
-        }
-      };
 
-      if (mime.contentType(path.extname(fileStorage.originalName))) {
-        params.ContentType = mime.contentType(path.extname(fileStorage.originalName));
+  async uploadData(fileStorage, data) {
+    try {
+      return await this.upload(fileStorage, TEMP_DIR, data);
+    } catch (e) {
+      errorToProblem(SERVICE, e);
+    }
+  }
+
+  createParams(fileStorage, dir, data) {
+    const key = this._join(this._key, dir, fileStorage.id);
+
+    const params = {
+      Bucket: this._bucket,
+      Key: key,
+      Body: data,
+      Metadata: {
+        'name': fileStorage.originalName,
+        'id': fileStorage.id
       }
+    };
+
+    if (mime.contentType(path.extname(fileStorage.originalName))) {
+      params.ContentType = mime.contentType(path.extname(fileStorage.originalName));
+    }
+
+    return params;
+  }
+
+  async upload(fileStorage, dir, data) {
+    try {
+      // uploads can go to a 'holding' area, we can shuffle it later if we want to.
+      const params = this.createParams(fileStorage, dir, data);
 
       return new Promise((resolve, reject) => {
         // eslint-disable-next-line no-unused-vars

@@ -4,7 +4,7 @@
       <template #activator="{ on, attrs }">
         <v-btn
           class="mx-1"
-          @click="dialog = true"
+          @click="openExportDialog"
           color="primary"
           icon
           v-bind="attrs"
@@ -150,9 +150,9 @@
               cols="6" >
               <div class="subTitleObjectStyle">Select the submission version</div>
               <v-select
-                item-text="id"
+                item-text="version"
                 item-value="version"
-                :items="versions&&versions"
+                :items="versions"
                 v-model="versionSelected"
                 class="mt-0"
                 style="width:25%; margin-top:0px;"
@@ -172,11 +172,6 @@
                   <template v-slot:label>
                     <span class="radioboxLabelStyle " style="display:flex; align-content: flex-start">Template 1 <div class="blueColorWrapper ml-1"> (Recommended) </div></span>
                   </template>
-
-                  <sup>Betas
-                    <font-awesome-icon icon="fa-solid fa-circle-info" size="xl" color='#1A5A96'/>
-                    <font-awesome-icon icon="fa-solid fa-info" size="xl" color='#1A5A96'/>
-                  </sup>
                 </v-radio>
                 <v-radio label="B" value="flattenedWithFilled">
                   <template v-slot:label>
@@ -223,6 +218,7 @@
 import moment from 'moment';
 import { mapActions, mapGetters } from 'vuex';
 import formService from '@/services/formService.js';
+import { NotificationTypes } from '@/utils/constants.js';
 
 import { faXmark,faSquareArrowUpRight } from '@fortawesome/free-solid-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -252,14 +248,15 @@ export default {
       let  momentString = momentObj.format('YYYY-MM-DD');
       return momentString;
     },
-    ...mapGetters('form', ['form', 'userFormPreferences']),
+    ...mapGetters('form', ['form', 'userFormPreferences','formVersionsubmissionList']),
     fileName() {
       return `${this.form.snake}_submissions.${this.exportFormat}`;
     },
   },
   methods: {
     ...mapActions('notifications', ['addNotification']),
-    ...mapActions('form'),
+    ...mapActions('form', ['fetchFormVersionSubmissions']),
+
     async callExport() {
       try {
         // UTC start of selected start date...
@@ -275,57 +272,83 @@ export default {
               .format()
             : undefined;
 
-        const response = await formService.exportSubmissions(
-          this.form.id,
-          this.exportFormat,
-          this.csvTemplates,
-          this.versionSelected,
-          {
-            minDate: from,
-            maxDate: to,
+        if(this.exportFormat==='json' || this.formVersionsubmissionList<500) {
+          const response = await formService.exportSubmissions(
+            this.form.id,
+            this.exportFormat,
+            this.csvTemplates,
+            {
+              minDate: from,
+              maxDate: to,
+              // deleted: true,
+              // drafts: true
+            },
+            this.dataFields?this.userFormPreferences.preferences:undefined
+          );
+          if (response && response.data) {
+            const blob = new Blob([response.data], {
+              type: response.headers['content-type'],
+            });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = this.fileName;
+            a.style.display = 'none';
+            a.classList.add('hiddenDownloadTextElement');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            this.dialog = false;
+          } else {
+            throw new Error('No data in response from exportSubmissions call');
+          }
+        } else {
+          const reservation = await formService.createReservation(
+            this.form.id,
+            this.exportFormat,
+            this.csvTemplates,
+            this.versionSelected,
+            {
+              minDate: from,
+              maxDate: to,
             // deleted: true,
             // drafts: true
-          },
-          this.dataFields?this.userFormPreferences.preferences:undefined
-        );
-
-        if (response && response.data) {
-          const blob = new Blob([response.data], {
-            type: response.headers['content-type'],
-          });
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = this.fileName;
-          a.style.display = 'none';
-          a.classList.add('hiddenDownloadTextElement');
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
+            },
+            this.dataFields?this.userFormPreferences.preferences:undefined
+          );
+          if (reservation && reservation.data && reservation.data.id) {
+            this.addNotification({
+              message: 'Your submissions request is being processed. Upon completion, an e-mail containing a download link to your submissions will be sent to you.',
+              ...NotificationTypes.SUCCESS
+            });
+          }
           this.dialog = false;
-        } else {
-          throw new Error('No data in response from exportSubmissions call');
         }
-
       } catch (error) {
         this.addNotification({
           message:
-            'An error occurred while attempting to export submissions for this form.',
+            (error && error.response && error.response.data && error.response.data.detail) ? error.response.data.detail : 'An error occurred while attempting to export submissions for this form.',
           consoleError: `Error export submissions for ${this.form.id}: ${error}`,
         });
       }
     },
+    async openExportDialog() {
+      if(this.form && this.form.versions) {
+        this.versions = await this.form.versions.sort((a, b) => a.version < b.version);
+        this.versionSelected = this.versions[0].version;
+        await this.fetchFormVersionSubmissions({formId:this.form.id, formVersionId:this.versions[0].id});
+      }
+      this.dialog = true;
+    }
   },
+
   watch:{
     startDate() {
       this.endDate= moment(Date()).format('YYYY-MM-DD');
     },
-    async exportFormat(value) {
-      if(value==='csv') {
-        if(this.form) {
-          this.versions.push(...(this.form.versions.map(version=>version.version)));
-        }
-      }
+
+    async versionSelected() {
+      await this.fetchFormVersionSubmissions({formId:this.form.id, formVersionId:this.versions[0].id});
     },
     dateRange(value) {
       if(!value) {
