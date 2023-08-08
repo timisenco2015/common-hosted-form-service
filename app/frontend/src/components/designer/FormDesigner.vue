@@ -203,6 +203,7 @@ export default {
       'form.userType',
       'form.versions',
       'form.isDirty',
+      'form.allowMultilanguageSupport',
     ]),
 
     ID_MODE() {
@@ -700,6 +701,7 @@ export default {
         showSubmissionConfirmation: this.showSubmissionConfirmation,
         allowSubmitterToUploadFile: this.allowSubmitterToUploadFile,
         submissionReceivedEmails: emailList,
+        allowMultilanguageSupport: this.allowMultilanguageSupport,
         reminder_enabled: false,
       });
 

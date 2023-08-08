@@ -300,6 +300,65 @@
               </div>
             </template>
           </v-checkbox>
+          <v-checkbox class="my-0" v-model="allowMultilanguageSupport.enabled">
+            <template #label>
+              <div :class="{ 'mr-2': isRTL }">
+                <span
+                  v-html="$t('trans.formSettings.enableMultilanguageSupport')"
+                />
+                <v-tooltip close-delay="3000" bottom>
+                  <template v-slot:activator="{ on, attrs }">
+                    <font-awesome-icon
+                      icon="fa-solid fa-flask"
+                      color="primary"
+                      class="ml-3"
+                      v-bind="attrs"
+                      v-on="on"
+                      :class="{ 'mr-2': isRTL }"
+                    />
+                  </template>
+                  <span
+                    >{{ $t('trans.formSettings.experimental') }}
+                    <a
+                      :href="githubLinkBulkUpload"
+                      class="preview_info_link_field_white"
+                      :target="'_blank'"
+                    >
+                      {{ $t('trans.formSettings.learnMore') }}
+                      <font-awesome-icon
+                        icon="fa-solid fa-square-arrow-up-right"
+                    /></a>
+                  </span>
+                </v-tooltip>
+              </div>
+            </template>
+          </v-checkbox>
+          <v-expand-transition>
+            <BaseInfoCard
+              v-if="allowMultilanguageSupport.enabled"
+              :class="isRTL ? 'mr-4' : 'ml-4'"
+            >
+              <div style="height: 200px; overflow-y: scroll">
+                <v-row>
+                  <v-col cols="12">
+                    <v-checkbox
+                      class="my-0"
+                      v-model="allowMultilanguageSupport.langs"
+                      v-for="(item, index) in multilangs"
+                      :key="index"
+                      :value="item.KEYWORD"
+                    >
+                      <template #label>
+                        <span :class="{ 'mr-2': isRTL }">
+                          {{ item.TITLE }}
+                        </span>
+                      </template>
+                    </v-checkbox>
+                  </v-col>
+                </v-row>
+              </div>
+            </BaseInfoCard>
+          </v-expand-transition>
         </BasePanel>
       </v-col>
 
@@ -1029,6 +1088,7 @@ import { mapFields } from 'vuex-map-fields';
 import {
   IdentityMode,
   IdentityProviders,
+  languages,
   Regex,
   ScheduleType,
 } from '@/utils/constants';
@@ -1085,6 +1145,7 @@ export default {
       'form.schedule',
       'form.reminder_enabled',
       'form.versions',
+      'form.allowMultilanguageSupport',
     ]),
     ...mapGetters('form', ['isRTL']),
     ID_MODE() {
@@ -1092,6 +1153,9 @@ export default {
     },
     ID_PROVIDERS() {
       return IdentityProviders;
+    },
+    multilangs() {
+      return languages;
     },
     isFormPublished() {
       return (
@@ -1370,7 +1434,6 @@ export default {
       return ScheduleType;
     },
   },
-  watch: {},
   methods: {
     ...mapActions('form', ['fetchForm']),
     userTypeChanged() {

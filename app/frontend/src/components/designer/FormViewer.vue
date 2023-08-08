@@ -188,6 +188,7 @@ import { isFormPublic } from '@/utils/permissionUtils';
 import { attachAttributesToLinks } from '@/utils/transformUtils';
 import { FormPermissions, NotificationTypes } from '@/utils/constants';
 import _ from 'lodash';
+import { mapFields } from 'vuex-map-fields';
 
 export default {
   name: 'FormViewer',
@@ -195,6 +196,11 @@ export default {
     Form,
     FormViewerActions,
     FormViewerMultiUpload,
+  },
+  provide() {
+    return {
+      isDynamicLang: true,
+    };
   },
   props: {
     bulkState: String,
@@ -274,7 +280,8 @@ export default {
       return this.$t('trans.formViewer.formScheduleExpireMessage');
     },
     ...mapGetters('auth', ['authenticated', 'token', 'tokenParsed', 'user']),
-    ...mapGetters('form', ['multiLanguage', 'isRTL']),
+    ...mapGetters('form', ['form', 'multiLanguage', 'isRTL']),
+    ...mapFields('form', ['form.allowMultilanguageSupport']),
     NOTIFICATIONS_TYPES() {
       return NotificationTypes;
     },
@@ -316,6 +323,7 @@ export default {
   },
   methods: {
     ...mapActions('notifications', ['addNotification']),
+    ...mapActions('form', ['setShowMultiLangBtn', 'fetchForm']),
     isFormPublic: isFormPublic,
     // setBulkFile
     setBulkFile(state) {
@@ -1154,6 +1162,18 @@ export default {
     },
   },
   async created() {
+    await this.fetchForm(this.formId);
+    if (this.allowMultilanguageSupport?.enabled) {
+      this.setShowMultiLangBtn({
+        isShowMultiLangBtn: true,
+        allowMultilanguageSupport: this.allowMultilanguageSupport,
+      });
+    } else {
+      this.setShowMultiLangBtn({
+        isShowMultiLangBtn: false,
+      });
+    }
+
     if (this.submissionId && this.isDuplicate) {
       //Run when make new submission from existing one called.
       await this.getFormData();
@@ -1166,6 +1186,7 @@ export default {
     }
     window.addEventListener('beforeunload', this.beforeWindowUnload);
   },
+
   beforeUpdate() {
     // This needs to be ran whenever we have a formSchema change
     if (this.forceNewTabLinks) {

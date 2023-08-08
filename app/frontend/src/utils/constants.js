@@ -75,6 +75,28 @@ export const IdentityProviders = Object.freeze({
   IDIR: 'idir', // IDIR
 });
 
+/** Identitiy Providers a user can log in as and a form can be allowed for */
+export const languages = Object.freeze([
+  { TITLE: 'English', KEYWORD: 'en' },
+  { TITLE: 'عربى (Arabic)', KEYWORD: 'ar' },
+  { TITLE: 'German (Germany)', KEYWORD: 'de' },
+  { TITLE: 'Español (Spanish)', KEYWORD: 'es' },
+  { TITLE: 'فارسی (Farsi)', KEYWORD: 'fa' },
+  { TITLE: 'Français (French)', KEYWORD: 'fr' },
+  { TITLE: 'हिंदी (Hindi)', KEYWORD: 'hi' },
+  { TITLE: 'Italian (Italy)', KEYWORD: 'it' },
+  { TITLE: '日本語 (Japanese)', KEYWORD: 'ja' },
+  { TITLE: '한국어 (Korean)', KEYWORD: 'ko' },
+  { TITLE: 'ਪੰਜਾਬੀ (Punjabi - Gurmukhi)', KEYWORD: 'pa' },
+  { TITLE: 'Portuguese (Portugal)', KEYWORD: 'pt' },
+  { TITLE: 'Русский (Russian)', KEYWORD: 'ru' },
+  { TITLE: 'Tagalog (Filipino)', KEYWORD: 'tl' },
+  { TITLE: 'Українська (Ukrainian)', KEYWORD: 'uk' },
+  { TITLE: 'Tiếng Việt (Vietnamese)', KEYWORD: 'vi' },
+  { TITLE: '简体中文 (Simplified Chinese)', KEYWORD: 'zh' },
+  { TITLE: '繁體中文 (Traditional Chinese)', KEYWORD: 'zhTW' },
+]);
+
 /** Corresponds to vuetify alert classes for notification types */
 export const NotificationTypes = Object.freeze({
   ERROR: {

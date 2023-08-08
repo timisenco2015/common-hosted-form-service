@@ -7,6 +7,7 @@ import {
   rbacService,
   userService,
 } from '@/services';
+import { languages } from '@/utils/constants';
 import { generateIdps, parseIdps } from '@/utils/transformUtils';
 import i18n from '@/internationalization';
 
@@ -34,6 +35,11 @@ const genInitialSchedule = () => ({
   },
 });
 
+const getInitialMultilanguageSupport = () => ({
+  enabled: false,
+  langs: [],
+});
+
 const genInitialForm = () => ({
   description: '',
   enableSubmitterDraft: false,
@@ -52,6 +58,7 @@ const genInitialForm = () => ({
   userType: IdentityMode.TEAM,
   versions: [],
   enableCopyExistingSubmission: false,
+  allowMultilanguageSupport: getInitialMultilanguageSupport(),
 });
 
 /**
@@ -88,6 +95,8 @@ export default {
     },
     multiLanguage: '',
     isRTL: false,
+    isShowMultiLangBtn: true,
+    languages: languages,
   },
   getters: {
     getField, // vuex-map-fields
@@ -110,6 +119,8 @@ export default {
     downloadedFile: (state) => state.downloadedFile,
     multiLanguage: (state) => state.multiLanguage,
     isRTL: (state) => state.isRTL,
+    isShowMultiLangBtn: (state) => state.isShowMultiLangBtn,
+    languages: (state) => state.languages,
   },
   mutations: {
     updateField, // vuex-map-fields
@@ -127,6 +138,9 @@ export default {
     },
     SET_FORM(state, form) {
       state.form = form;
+      if (Object.keys(form.allowMultilanguageSupport).length === 0) {
+        state.form.allowMultilanguageSupport = getInitialMultilanguageSupport();
+      }
     },
     SET_IS_RTL(state, isRTL) {
       state.isRTL = isRTL;
@@ -176,6 +190,12 @@ export default {
     },
     SET_MULTI_LANGUAGE(state, multiLanguage) {
       state.multiLanguage = multiLanguage;
+    },
+    SET_MULTI_LANGUAGES_LIST(state, languages) {
+      state.languages = languages;
+    },
+    SET_IS_SHOW_MULTI_LANG_BTN(state, isShowMultiLangBtn) {
+      state.isShowMultiLangBtn = isShowMultiLangBtn;
     },
   },
   actions: {
@@ -475,7 +495,7 @@ export default {
             : [];
 
         const schedule = state.form.schedule.enabled ? state.form.schedule : {};
-
+        console.log('---->>>>>', state.form.allowMultilanguageSupport);
         // const reminder = state.form.schedule.enabled ?  : false ;
 
         await formService.updateForm(state.form.id, {
@@ -491,6 +511,7 @@ export default {
           submissionReceivedEmails: emailList,
           schedule: schedule,
           allowSubmitterToUploadFile: state.form.allowSubmitterToUploadFile,
+          allowMultilanguageSupport: state.form.allowMultilanguageSupport,
           reminder_enabled: state.form.reminder_enabled
             ? state.form.reminder_enabled
             : false,
@@ -892,6 +913,22 @@ export default {
       } else {
         commit('SET_IS_RTL', false);
       }
+    },
+    async setShowMultiLangBtn(
+      { commit },
+      { isShowMultiLangBtn, allowMultilanguageSupport }
+    ) {
+      if (isShowMultiLangBtn) {
+        let lans = languages?.filter((item) =>
+          allowMultilanguageSupport?.langs?.find(
+            (data) => data === item.KEYWORD
+          )
+        );
+        commit('SET_MULTI_LANGUAGES_LIST', lans);
+      } else {
+        commit('SET_MULTI_LANGUAGES_LIST', languages);
+      }
+      commit('SET_IS_SHOW_MULTI_LANG_BTN', isShowMultiLangBtn);
     },
     async downloadFile({ commit, dispatch }, fileId) {
       try {

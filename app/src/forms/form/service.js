@@ -72,6 +72,7 @@ const service = {
       obj.schedule = data.schedule;
       obj.reminder_enabled = data.reminder_enabled;
       obj.enableCopyExistingSubmission = data.enableCopyExistingSubmission;
+      obj.allowMultilanguageSupport = data.allowMultilanguageSupport;
 
       await Form.query(trx).insert(obj);
       if (data.identityProviders && Array.isArray(data.identityProviders) && data.identityProviders.length) {
@@ -140,6 +141,7 @@ const service = {
         enableSubmitterDraft: data.enableSubmitterDraft,
         updatedBy: currentUser.usernameIdp,
         allowSubmitterToUploadFile: data.allowSubmitterToUploadFile,
+        allowMultilanguageSupport: data.allowMultilanguageSupport,
         schedule: data.schedule,
         reminder_enabled: data.reminder_enabled,
         enableCopyExistingSubmission: data.enableCopyExistingSubmission,

@@ -51,6 +51,7 @@
   "formSettings": {
     "pressToAddMultiEmail": "Press <kbd>enter</kbd> or <kbd>,</kbd> or <kbd>space</kbd> to add multiple email addresses",
     "allowMultiDraft": "Allow <strong> multiple draft</strong> upload",
+    "enableMultilanguageSupport": "Enable <strong> multilanguage Support</strong>",
     "formTitle": "Form Title",
     "formDescription": "Form Description",
     "formAccess": "Form Access",
