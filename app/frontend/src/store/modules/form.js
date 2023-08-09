@@ -495,7 +495,6 @@ export default {
             : [];
 
         const schedule = state.form.schedule.enabled ? state.form.schedule : {};
-        console.log('---->>>>>', state.form.allowMultilanguageSupport);
         // const reminder = state.form.schedule.enabled ?  : false ;
 
         await formService.updateForm(state.form.id, {
@@ -918,17 +917,26 @@ export default {
       { commit },
       { isShowMultiLangBtn, allowMultilanguageSupport }
     ) {
-      if (isShowMultiLangBtn) {
+      console.log('I am hereeeeeeeeeeeeeeeeeA---->>', isShowMultiLangBtn);
+      console.log(
+        'I am hereeeeeeeeeeeeeeeeeB---->>',
+        allowMultilanguageSupport?.enabled
+      );
+      if (!isShowMultiLangBtn && allowMultilanguageSupport.enabled) {
+        console.log('I am hereeeeeeeeeeeeeeeee');
+        commit('SET_MULTI_LANGUAGES_LIST', languages);
+        commit('SET_IS_SHOW_MULTI_LANG_BTN', true);
+      } else if (!isShowMultiLangBtn) {
+        commit('SET_IS_SHOW_MULTI_LANG_BTN', isShowMultiLangBtn);
+      } else if (allowMultilanguageSupport?.enabled && isShowMultiLangBtn) {
         let lans = languages?.filter((item) =>
           allowMultilanguageSupport?.langs?.find(
             (data) => data === item.KEYWORD
           )
         );
+        commit('SET_IS_SHOW_MULTI_LANG_BTN', isShowMultiLangBtn);
         commit('SET_MULTI_LANGUAGES_LIST', lans);
-      } else {
-        commit('SET_MULTI_LANGUAGES_LIST', languages);
       }
-      commit('SET_IS_SHOW_MULTI_LANG_BTN', isShowMultiLangBtn);
     },
     async downloadFile({ commit, dispatch }, fileId) {
       try {

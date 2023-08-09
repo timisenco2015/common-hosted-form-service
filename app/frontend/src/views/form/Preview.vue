@@ -19,8 +19,9 @@
 
 <script>
 import FormViewer from '@/components/designer/FormViewer.vue';
-import { mapGetters } from 'vuex';
+import { mapGetters, mapActions } from 'vuex';
 import { IdentityProviders } from '@/utils/constants';
+import { mapFields } from 'vuex-map-fields';
 
 export default {
   name: 'FormPreview',
@@ -33,8 +34,25 @@ export default {
     FormViewer,
   },
   computed: {
+    ...mapFields('form', ['form.allowMultilanguageSupport']),
     ...mapGetters('form', ['isRTL']),
     IDP: () => IdentityProviders,
+  },
+  methods: {
+    ...mapActions('form', ['setShowMultiLangBtn', 'fetchForm']),
+  },
+  async created() {
+    await this.fetchForm(this.f);
+    if (this.allowMultilanguageSupport?.enabled) {
+      this.setShowMultiLangBtn({
+        isShowMultiLangBtn: true,
+        allowMultilanguageSupport: this.allowMultilanguageSupport,
+      });
+    } else {
+      this.setShowMultiLangBtn({
+        isShowMultiLangBtn: false,
+      });
+    }
   },
 };
 </script>

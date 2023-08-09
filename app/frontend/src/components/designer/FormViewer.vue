@@ -280,7 +280,7 @@ export default {
       return this.$t('trans.formViewer.formScheduleExpireMessage');
     },
     ...mapGetters('auth', ['authenticated', 'token', 'tokenParsed', 'user']),
-    ...mapGetters('form', ['form', 'multiLanguage', 'isRTL']),
+    ...mapGetters('form', ['multiLanguage', 'isRTL']),
     ...mapFields('form', ['form.allowMultilanguageSupport']),
     NOTIFICATIONS_TYPES() {
       return NotificationTypes;
@@ -1111,6 +1111,10 @@ export default {
       });
     },
     leaveThisPage() {
+      this.setShowMultiLangBtn({
+        isShowMultiLangBtn: false,
+        allowMultilanguageSupport: this.allowMultilanguageSupport,
+      });
       if (this.saveDraftState == 0 || this.bulkFile) {
         this.goTo('UserSubmissions', { f: this.form.id });
       } else {
@@ -1171,6 +1175,7 @@ export default {
     } else {
       this.setShowMultiLangBtn({
         isShowMultiLangBtn: false,
+        allowMultilanguageSupport: this.allowMultilanguageSupport,
       });
     }
 
