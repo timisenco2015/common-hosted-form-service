@@ -1,5 +1,5 @@
 <template>
-  <span>
+  <span :class="{ 'dir-rtl': isRTL }">
     <span v-if="addingUsers" style="margin-right: 656px" elevation="1">
       <v-sheet
         elevation="1"
@@ -41,13 +41,16 @@
               :loading="isLoading"
               return-object
               :search-input.sync="searchUsers"
+              :class="{ label: isRTL }"
             >
               <!-- no data -->
               <template #no-data>
                 <div
                   class="px-2"
+                  :class="{ 'text-right': isRTL }"
                   v-html="$t('trans.addTeamMember.cantFindChefsUsers')"
-                ></div>
+                  :lang="lang"
+                />
               </template>
               <!-- selected user -->
               <template #selection="data">
@@ -110,28 +113,28 @@
             <!-- buttons -->
             <v-btn
               color="primary"
-              class="ml-2"
+              class="isRTL ? mr-3 : ml-3"
               :disabled="!model"
               :loading="isLoading"
               @click="save"
             >
-              <span>Add</span>
+              <span :lang="lang">{{ $t('trans.addTeamMember.add') }}</span>
             </v-btn>
             <v-btn
               outlined
-              class="ml-2"
+              class="isRTL ? mr-2 : ml-2"
               @click="
                 addingUsers = false;
                 showError = false;
               "
             >
-              <span>Cancel</span>
+              <span :lang="lang">{{ $t('trans.addTeamMember.cancel') }}</span>
             </v-btn>
           </v-col>
         </v-row>
         <v-row v-if="showError" class="px-4 my-0 py-0">
           <v-col class="text-left">
-            <span class="red--text">{{
+            <span class="red--text" :lang="lang">{{
               $t('trans.addTeamMember.mustSelectAUser')
             }}</span>
           </v-col>
@@ -153,7 +156,7 @@
             <v-icon>person_add</v-icon>
           </v-btn>
         </template>
-        <span>{{ $t('trans.addTeamMember.addNewMember') }}</span>
+        <span :lang="lang">{{ $t('trans.addTeamMember.addNewMember') }}</span>
       </v-tooltip>
     </span>
   </span>
@@ -209,6 +212,7 @@ export default {
   computed: {
     ...mapFields('form', ['form.idps']),
     ...mapGetters('auth', ['identityProvider']),
+    ...mapGetters('form', ['isRTL', 'lang']),
     ID_PROVIDERS() {
       return IdentityProviders;
     },

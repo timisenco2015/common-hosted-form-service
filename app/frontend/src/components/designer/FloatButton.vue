@@ -1,19 +1,7 @@
 <template>
-  <div
-    :style="[
-      {
-        display: 'flex',
-        width: '92px',
-        flexDirection: fabItemsDirection,
-        gap: fabItemsGap,
-        zIndex: fabZIndex,
-        position: 'fixed',
-      },
-      fabItemsPosition,
-    ]"
-  >
-    <div class="fabAction" @click="onOpenFABActionItems">
-      <div class="text" v-text="baseFABItemName" />
+  <div :class="{ 'dir-rtl': isRTL }" :style="computedStyles">
+    <div class="fabAction" @click="onOpenFABActionItems" :lang="lang">
+      <div class="text" v-text="baseFABItemName" :lang="lang" />
       <v-avatar class="fabItemsInverColor" :size="fabItemsSize">
         <v-icon :color="baseIconColor" :size="fabItemsIconsSize">
           {{ baseIconName }}
@@ -37,7 +25,11 @@
         :class="{ 'disabled-router': !formId }"
         tag="div"
       >
-        <div class="text" v-text="$t('trans.floatButton.publish')" />
+        <div
+          class="text"
+          v-text="$t('trans.floatButton.publish')"
+          :lang="lang"
+        />
         <v-avatar class="fabItemsInverColor" :size="fabItemsSize">
           <v-icon
             :color="
@@ -57,7 +49,11 @@
         :class="{ 'disabled-router': !formId }"
         tag="div"
       >
-        <div class="text" v-text="$t('trans.floatButton.manage')" />
+        <div
+          class="text"
+          v-text="$t('trans.floatButton.manage')"
+          :lang="lang"
+        />
         <v-avatar class="fabItemsInverColor" :size="fabItemsSize">
           <v-icon
             :color="
@@ -76,7 +72,7 @@
         data-cy="redoButton"
         :class="{ 'disabled-router': !redoEnabled }"
       >
-        <div class="text" v-text="$t('trans.floatButton.redo')" />
+        <div class="text" v-text="$t('trans.floatButton.redo')" :lang="lang" />
         <v-avatar
           class="fabItems"
           :size="fabItemsSize"
@@ -96,7 +92,7 @@
         data-cy="undoButton"
         :class="{ 'disabled-router': !undoEnabled }"
       >
-        <div class="text" v-text="$t('trans.floatButton.undo')" />
+        <div class="text" v-text="$t('trans.floatButton.undo')" :lang="lang" />
         <v-avatar
           class="fabItems"
           :size="fabItemsSize"
@@ -116,7 +112,11 @@
         @click="gotoPreview"
         :class="{ 'disabled-router': !formId || !draftId }"
       >
-        <div class="text" v-text="$t('trans.floatButton.preview')" />
+        <div
+          class="text"
+          v-text="$t('trans.floatButton.preview')"
+          :lang="lang"
+        />
         <v-avatar class="fabItems" :size="fabItemsSize">
           <v-icon
             :color="formId ? fabItemsColor : disabledFabItemsColor"
@@ -132,7 +132,7 @@
         ref="saveButton"
         :class="{ 'disabled-router': isFormSaved }"
       >
-        <div class="text">{{ this.savedMsg }}</div>
+        <div class="text" :lang="lang">{{ this.savedMsg }}</div>
         <v-avatar
           class="fabItems"
           :size="fabItemsSize"
@@ -156,7 +156,7 @@
         </v-avatar>
       </div>
       <div class="fabAction">
-        <div class="text" v-text="scrollName" />
+        <div class="text" v-text="scrollName" :lang="lang" />
 
         <v-avatar class="fabItems" :size="fabItemsSize" @click="onHandleScroll">
           <v-icon :color="fabItemsColor" :size="fabItemsIconsSize">
@@ -166,7 +166,7 @@
       </div>
     </div>
     <div class="fabAction" v-if="!isFABActionsOpen">
-      <div>{{ scrollName }}</div>
+      <div :lang="lang">{{ scrollName }}</div>
       <v-avatar class="fabItems" :size="fabItemsSize" @click="onHandleScroll">
         <v-icon :color="fabItemsColor" :size="fabItemsIconsSize">
           {{ scrollIconName }}
@@ -206,7 +206,29 @@ export default {
     };
   },
   computed: {
-    ...mapGetters('form', ['multiLanguage']),
+    ...mapGetters('form', ['lang', 'isRTL']),
+    computedStyles() {
+      let baseStyles = {
+        display: 'flex',
+        width: '92px',
+        flexDirection: this.fabItemsDirection,
+        gap: this.fabItemsGap,
+        zIndex: this.fabZIndex,
+        position: 'fixed',
+      };
+
+      let conditionalStyles = {};
+      let fabItemsPosition = { ...this.fabItemsPosition };
+
+      switch (this.$i18n.locale) {
+        case 'uk':
+          baseStyles.width = '111px';
+          fabItemsPosition.right = '-.3vw';
+          break;
+      }
+
+      return [baseStyles, fabItemsPosition, conditionalStyles];
+    },
   },
   props: {
     formId: String,
@@ -427,7 +449,7 @@ export default {
         this.savedMsg = this.$t('trans.floatButton.notSaved');
       }
     },
-    multiLanguage() {
+    lang() {
       this.scrollName = this.$t('trans.floatButton.bottom');
 
       if (this.isFABActionsOpen) {
@@ -516,9 +538,6 @@ export default {
   border: 1px solid #003366;
 }
 .text {
-  overflow-wrap: break-word;
-  width: 50px;
   text-align: center;
-  word-break: break-word;
 }
 </style>

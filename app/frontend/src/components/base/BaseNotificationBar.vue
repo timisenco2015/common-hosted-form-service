@@ -1,19 +1,21 @@
 <template>
   <v-alert
-    :class="'target-notification ' + notification.class"
+    :class="['target-notification ' + notification.class, { 'dir-rtl': isRTL }]"
     :icon="notification.icon"
     prominent
     dismissible
     @input="alertClosed"
     transition="slide-y-transition"
   >
-    <h3 v-if="notification.title">{{ notification.title }}</h3>
+    <h3 v-if="notification.title" :lang="lang">
+      {{ notification.title }}
+    </h3>
     {{ notification.message }}
   </v-alert>
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
 export default {
   name: 'BaseNotificationBar',
   props: {
@@ -29,6 +31,9 @@ export default {
     return {
       timeout: null,
     };
+  },
+  computed: {
+    ...mapGetters('form', ['isRTL', 'lang']),
   },
   methods: {
     ...mapActions('notifications', ['deleteNotification']),

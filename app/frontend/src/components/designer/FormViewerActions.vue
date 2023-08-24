@@ -1,11 +1,16 @@
 <template>
-  <v-row class="d-print-none">
-    <v-col v-if="formId">
+  <div
+    class="d-print-none d-flex flex-md-row justify-space-between flex-sm-row flex-xs-column-reverse"
+    :class="{ 'dir-rtl': isRTL }"
+  >
+    <div v-if="formId">
       <v-btn outlined @click="goToAllSubmissionOrDraft">
-        <span>{{ $t('trans.formViewerActions.viewAllSubmissions') }}</span>
+        <span :lang="lang"
+          >{{ $t('trans.formViewerActions.viewAllSubmissions') }}
+        </span>
       </v-btn>
-    </v-col>
-    <v-col class="text-right">
+    </div>
+    <div>
       <!-- Bulk button -->
       <span v-if="allowSubmitterToUploadFile && !block" class="ml-2">
         <v-tooltip bottom>
@@ -20,7 +25,7 @@
               <v-icon>repeat</v-icon>
             </v-btn>
           </template>
-          <span>{{
+          <span :lang="lang">{{
             bulkFile
               ? $t('trans.formViewerActions.switchSingleSubmssn')
               : $t('trans.formViewerActions.switchMultiSubmssn')
@@ -46,7 +51,9 @@
               <v-icon>save</v-icon>
             </v-btn>
           </template>
-          <span>{{ $t('trans.formViewerActions.saveAsADraft') }}</span>
+          <span :lang="lang">{{
+            $t('trans.formViewerActions.saveAsADraft')
+          }}</span>
         </v-tooltip>
       </span>
 
@@ -66,7 +73,9 @@
                 <v-icon>mode_edit</v-icon>
               </v-btn>
             </template>
-            <span>{{ $t('trans.formViewerActions.editThisDraft') }}</span>
+            <span :lang="lang">{{
+              $t('trans.formViewerActions.editThisDraft')
+            }}</span>
           </v-tooltip>
         </router-link>
       </span>
@@ -77,15 +86,15 @@
           :submissionId="submissionId"
         />
       </span>
-    </v-col>
-  </v-row>
+    </div>
+  </div>
 </template>
 
 <script>
 import { FormPermissions } from '@/utils/constants';
 import ManageSubmissionUsers from '@/components/forms/submission/ManageSubmissionUsers.vue';
 import PrintOptions from '@/components/forms/PrintOptions.vue';
-
+import { mapGetters } from 'vuex';
 export default {
   name: 'MySubmissionsActions',
   components: {
@@ -134,6 +143,7 @@ export default {
     },
   },
   computed: {
+    ...mapGetters('form', ['lang']),
     canSaveDraft() {
       return !this.readOnly;
     },
@@ -143,6 +153,7 @@ export default {
         this.permissions.includes(FormPermissions.SUBMISSION_UPDATE)
       );
     },
+    ...mapGetters('form', ['isRTL']),
   },
   methods: {
     switchView() {

@@ -1,5 +1,5 @@
 <template>
-  <v-card>
+  <v-card :class="{ 'dir-rtl': isRTL }">
     <v-card-title class="text-h5 pb-0 titleWrapper">
       <slot name="filter-title"></slot>
     </v-card-title>
@@ -7,7 +7,7 @@
     <v-card-text class="mt-0 pt-0">
       <hr class="hr" />
 
-      <div class="d-flex flex-row align-center" style="gap: 30px">
+      <div class="d-flex flex-row" style="gap: 10px">
         <v-text-field
           v-model="inputFilter"
           :label="inputFilterLabel"
@@ -18,9 +18,26 @@
           filled
           dense
           class="mt-3"
-        >
-        </v-text-field>
+          :class="{ label: isRTL }"
+          :lang="lang"
+        />
+        <v-tooltip bottom>
+          <template #activator="{ on, attrs }">
+            <v-btn
+              color="primary"
+              class="mx-1 align-self-center mb-3"
+              icon
+              @click="onResetColumns"
+              v-bind="attrs"
+              v-on="on"
+            >
+              <v-icon>repeat</v-icon>
+            </v-btn>
+          </template>
+          <span :lang="lang">{{ $t('trans.baseFilter.resetColumns') }}</span>
+        </v-tooltip>
       </div>
+
       <v-data-table
         fixed-header
         show-select
@@ -28,19 +45,23 @@
         height="300px"
         v-model="selectedData"
         :headers="inputHeaders"
-        :items="inputData"
+        :items="tableData"
         :item-key="inputItemKey"
         :search="inputFilter"
         class="grey lighten-5"
+        disable-pagination
+        :lang="lang"
       >
       </v-data-table>
-      <v-btn @click="savingFilterData" class="primary mt-3">{{
+      <v-btn @click="savingFilterData" class="primary mt-3" :lang="lang">{{
         inputSaveButtonText
       }}</v-btn>
       <v-btn
         @click="cancelFilterData"
-        class="mt-3 ml-3 primary--text"
+        class="mt-3 primary--text"
+        :class="isRTL ? 'mr-3' : 'ml-3'"
         outlined
+        :lang="lang"
         >{{ $t('trans.baseFilter.cancel') }}</v-btn
       >
     </v-card-text>
@@ -48,7 +69,9 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import i18n from '@/internationalization';
+
 export default {
   name: 'BaseFilter',
   props: {
@@ -77,6 +100,10 @@ export default {
         },
       ],
     },
+    resetData: {
+      type: Array,
+      default: () => [],
+    },
     // The default selected data
     preselectedData: {
       type: Array,
@@ -99,19 +126,29 @@ export default {
       default: i18n.t('trans.baseFilter.filter'),
     },
   },
+  computed: {
+    ...mapGetters('form', ['isRTL', 'lang']),
+  },
   data() {
     return {
       selectedData: this.preselectedData,
       inputFilter: '',
+      tableData: this.inputData,
     };
   },
+
   methods: {
     savingFilterData() {
       this.inputFilter = '';
       this.$emit('saving-filter-data', this.selectedData);
     },
+    onResetColumns() {
+      this.selectedData = this.resetData;
+      this.inputFilter = '';
+    },
     cancelFilterData() {
-      this.$emit('cancel-filter-data');
+      (this.selectedData = this.preselectedData),
+        this.$emit('cancel-filter-data');
     },
   },
 };
@@ -138,7 +175,6 @@ export default {
   font-family: BCSans !important;
   color: #000000 !important;
 }
-
 .hr {
   height: 1px;
   border: none;

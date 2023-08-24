@@ -1,24 +1,36 @@
 <template>
-  <div>
+  <div :class="{ 'dir-rtl': isRTL }">
     <v-row no-gutters>
       <v-col cols="12" sm="8">
         <v-checkbox
           class="pl-3"
+          :class="isRTL ? 'float-right' : 'float-left'"
           v-model="activeOnly"
-          :label="$t('trans.adminFormsTable.showDeletedForms')"
           @click="refeshForms"
-        />
+        >
+          <template #label>
+            <span :class="{ 'mr-2': isRTL }" :lang="lang">
+              {{ $t('trans.adminFormsTable.showDeletedForms') }}
+            </span>
+          </template>
+        </v-checkbox>
       </v-col>
+
       <v-col cols="12" sm="4">
         <!-- search input -->
-        <div class="submissions-search">
+        <div
+          class="submissions-search"
+          :class="isRTL ? 'float-left' : 'float-right'"
+        >
           <v-text-field
             v-model="search"
             append-icon="mdi-magnify"
+            :lang="lang"
             :label="$t('trans.adminFormsTable.search')"
             single-line
             hide-details
             class="pb-5"
+            :class="{ 'dir-rtl': isRTL, label: isRTL }"
           />
         </div>
       </v-col>
@@ -32,6 +44,7 @@
       :items="formList"
       :search="search"
       :loading="loading"
+      :lang="lang"
       :loading-text="$t('trans.adminFormsTable.loadingText')"
       :no-data-text="$t('trans.adminFormsTable.noDataText')"
     >
@@ -45,7 +58,7 @@
         <router-link :to="{ name: 'AdministerForm', query: { f: item.id } }">
           <v-btn color="primary" text small>
             <v-icon class="mr-1">build_circle</v-icon>
-            <span class="d-none d-sm-flex">{{
+            <span class="d-none d-sm-flex" :lang="lang">{{
               $t('trans.adminFormsTable.admin')
             }}</span>
           </v-btn>
@@ -60,7 +73,7 @@
         >
           <v-btn color="primary" text small>
             <v-icon class="mr-1">note_add</v-icon>
-            <span class="d-none d-sm-flex">{{
+            <span class="d-none d-sm-flex" :lang="lang">{{
               $t('trans.adminFormsTable.launch')
             }}</span>
           </v-btn>
@@ -85,6 +98,7 @@ export default {
   },
   computed: {
     ...mapGetters('admin', ['formList']),
+    ...mapGetters('form', ['isRTL', 'lang']),
     calcHeaders() {
       return this.headers.filter(
         (x) => x.value !== 'updatedAt' || this.activeOnly

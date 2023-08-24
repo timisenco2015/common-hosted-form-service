@@ -1,17 +1,21 @@
 <template>
-  <div>
-    <v-row class="mt-6" no-gutters>
+  <div :class="{ 'dir-rtl': isRTL }">
+    <div
+      class="mt-4 d-flex flex-md-row justify-space-between flex-sm-column flex-xs-column"
+    >
       <!-- page title -->
-      <v-col cols="12" sm="6" order="2" order-sm="1">
-        <h1>Submissions</h1>
-      </v-col>
+      <div>
+        <h1 :lang="lang">
+          {{ $t('trans.submissionsTable.submissions') }}
+        </h1>
+      </div>
       <!-- buttons -->
-      <v-col class="text-right" cols="12" sm="6" order="1" order-sm="2">
+      <div>
         <span v-if="checkFormManage">
           <v-tooltip bottom>
             <template #activator="{ on, attrs }">
               <v-btn
-                @click="showColumnsDialog = true"
+                @click="onShowColumnDialog"
                 class="mx-1"
                 color="primary"
                 icon
@@ -21,7 +25,9 @@
                 <v-icon>view_column</v-icon>
               </v-btn>
             </template>
-            <span>{{ $t('trans.submissionsTable.selectColumns') }}</span>
+            <span :lang="lang">{{
+              $t('trans.submissionsTable.selectColumns')
+            }}</span>
           </v-tooltip>
           <v-tooltip bottom>
             <template #activator="{ on, attrs }">
@@ -38,7 +44,9 @@
                 </v-btn>
               </router-link>
             </template>
-            <span>{{ $t('trans.submissionsTable.manageForm') }}</span>
+            <span :lang="lang">{{
+              $t('trans.submissionsTable.manageForm')
+            }}</span>
           </v-tooltip>
           <v-tooltip bottom>
             <template #activator="{ on, attrs }">
@@ -56,31 +64,44 @@
                 </v-btn>
               </router-link>
             </template>
-            <span>{{ $t('trans.submissionsTable.submissionsToFiles') }}</span>
+            <span :lang="lang">{{
+              $t('trans.submissionsTable.submissionsToFiles')
+            }}</span>
           </v-tooltip>
         </span>
-      </v-col>
-    </v-row>
+      </div>
+    </div>
 
-    <v-row no-gutters>
-      <v-spacer />
-      <v-col cols="4" sm="4">
+    <div
+      class="d-flex flex-md-row justify-space-between flex-sm-column flex-xs-column"
+    >
+      <div>
         <v-checkbox
           class="pl-3"
           v-model="deletedOnly"
-          :label="$t('trans.submissionsTable.showDeletedSubmissions')"
           @click="refreshSubmissions"
-        />
-      </v-col>
-      <v-col cols="4" sm="4">
+        >
+          <template #label>
+            <span :class="{ 'mr-2': isRTL }" :lang="lang">
+              {{ $t('trans.submissionsTable.showDeletedSubmissions') }}
+            </span>
+          </template>
+        </v-checkbox>
+      </div>
+      <div>
         <v-checkbox
           class="pl-3"
           v-model="currentUserOnly"
-          :label="$t('trans.submissionsTable.showMySubmissions')"
           @click="refreshSubmissions"
-        />
-      </v-col>
-      <v-col cols="12" sm="4">
+        >
+          <template #label>
+            <span :class="{ 'mr-2': isRTL }" :lang="lang">
+              {{ $t('trans.submissionsTable.showMySubmissions') }}
+            </span>
+          </template>
+        </v-checkbox>
+      </div>
+      <div>
         <!-- search input -->
         <div class="submissions-search">
           <v-text-field
@@ -90,10 +111,12 @@
             single-line
             hide-details
             class="pb-5"
+            :class="{ label: isRTL }"
+            :lang="lang"
           />
         </div>
-      </v-col>
-    </v-row>
+      </div>
+    </div>
 
     <!-- table header -->
     <v-data-table
@@ -107,6 +130,7 @@
       v-model="selectedSubmissions"
       :loading-text="$t('trans.submissionsTable.loadingText')"
       :no-data-text="$t('trans.submissionsTable.noDataText')"
+      :lang="lang"
     >
       <template v-slot:[`header.event`]>
         <span v-if="!deletedOnly">
@@ -122,7 +146,7 @@
                   >remove_circle</v-icon
                 >
               </template>
-              <span>{{
+              <span :lang="lang">{{
                 $t('trans.submissionsTable.delSelectedSubmissions')
               }}</span>
             </v-tooltip>
@@ -143,7 +167,7 @@
                   >restore_from_trash</v-icon
                 >
               </template>
-              <span>{{
+              <span :lang="lang">{{
                 $t('trans.submissionsTable.resSelectedSubmissions')
               }}</span>
             </v-tooltip>
@@ -158,11 +182,13 @@
         {{ item.status }}
       </template>
       <template #[`item.lateEntry`]="{ item }">
-        {{
-          item.lateEntry === true
-            ? $t('trans.submissionsTable.yes')
-            : $t('trans.submissionsTable.no')
-        }}
+        <span :lang="lang">
+          {{
+            item.lateEntry === true
+              ? $t('trans.submissionsTable.yes')
+              : $t('trans.submissionsTable.no')
+          }}
+        </span>
       </template>
       <template #[`item.actions`]="{ item }">
         <v-tooltip bottom>
@@ -180,7 +206,9 @@
               </v-btn>
             </router-link>
           </template>
-          <span>{{ $t('trans.submissionsTable.viewSubmission') }}</span>
+          <span :lang="lang">{{
+            $t('trans.submissionsTable.viewSubmission')
+          }}</span>
         </v-tooltip>
       </template>
       <template #[`item.event`]="{ item }">
@@ -201,7 +229,9 @@
                 <v-icon>remove_circle</v-icon>
               </v-btn>
             </template>
-            <span>{{ $t('trans.submissionsTable.deleteSubmission') }}</span>
+            <span :lang="lang">{{
+              $t('trans.submissionsTable.deleteSubmission')
+            }}</span>
           </v-tooltip>
         </span>
         <span v-if="item.deleted">
@@ -221,7 +251,7 @@
                 <v-icon>restore_from_trash</v-icon>
               </v-btn>
             </template>
-            <span>{{ $t('trans.submissionsTable.restore') }}</span>
+            <span :lang="lang">{{ $t('trans.submissionsTable.restore') }}</span>
           </v-tooltip>
         </span>
       </template>
@@ -233,12 +263,14 @@
       @close-dialog="showDeleteDialog = false"
       @continue-dialog="delSub"
     >
-      <template #title>Confirm Deletion</template>
+      <template #title>{{
+        $t('trans.submissionsTable.confirmDeletion')
+      }}</template>
       <template #text>
         {{ singleSubmissionDelete ? singleDeleteMessage : multiDeleteMessage }}
       </template>
       <template #button-text-continue>
-        <span>{{ $t('trans.submissionsTable.delete') }}</span>
+        <span :lang="lang">{{ $t('trans.submissionsTable.delete') }}</span>
       </template>
     </BaseDialog>
     <BaseDialog
@@ -247,16 +279,18 @@
       @close-dialog="showRestoreDialog = false"
       @continue-dialog="restoreSub"
     >
-      <template #title>{{
-        $t('trans.submissionsTable.confirmRestoration')
-      }}</template>
+      <template #title
+        ><span :lang="lang">
+          {{ $t('trans.submissionsTable.confirmRestoration') }}</span
+        ></template
+      >
       <template #text>
         {{
           singleSubmissionRestore ? singleRestoreMessage : multiRestoreMessage
         }}
       </template>
       <template #button-text-continue>
-        <span>{{ $t('trans.submissionsTable.restore') }}</span>
+        <span :lang="lang">{{ $t('trans.submissionsTable.restore') }}</span>
       </template>
     </BaseDialog>
 
@@ -267,14 +301,18 @@
         "
         inputItemKey="value"
         :inputSaveButtonText="$t('trans.submissionsTable.save')"
-        :inputData="FILTER_HEADERS"
+        :inputData="SELECT_COLUMNS_HEADERS"
+        :resetData="FILTER_HEADERS"
         :preselectedData="PRESELECTED_DATA"
         @saving-filter-data="updateFilter"
         @cancel-filter-data="showColumnsDialog = false"
+        :lang="lang"
       >
-        <template #filter-title>{{
-          $t('trans.submissionsTable.searchTitle')
-        }}</template>
+        <template #filter-title
+          ><span :lang="lang">
+            {{ $t('trans.submissionsTable.searchTitle') }}
+          </span></template
+        >
       </BaseFilter>
     </v-dialog>
   </div>
@@ -312,6 +350,12 @@ export default {
         {
           value: 'event',
         },
+      ],
+      tableFilterIgnore: [
+        { value: 'date' },
+        { value: 'submitter' },
+        { value: 'status' },
+        { value: 'lateEntry' },
       ],
       loading: true,
       restoreItem: {},
@@ -353,77 +397,40 @@ export default {
       'userFormPreferences',
       'roles',
       'deletedSubmissions',
+      'isRTL',
+      'lang',
     ]),
     ...mapGetters('auth', ['user']),
 
     checkFormManage() {
       return this.permissions.some((p) => FormManagePermissions.includes(p));
     },
-
-    DEFAULT_HEADERS() {
+    DEFAULT_HEADER() {
       let headers = [
         {
           text: this.$t('trans.submissionsTable.confirmationID'),
           align: 'start',
           value: 'confirmationId',
         },
+
+        {
+          text: this.$t('trans.submissionsTable.submissionDate'),
+          align: 'start',
+          value: 'date',
+        },
+
+        {
+          text: this.$t('trans.submissionsTable.submitter'),
+          align: 'start',
+          value: 'submitter',
+        },
+
+        {
+          text: this.$t('trans.submissionsTable.status'),
+          align: 'start',
+          value: 'status',
+        },
       ];
-
-      if (this.userFormPreferences?.preferences?.columns) {
-        if (this.userFormPreferences.preferences.columns.includes('date')) {
-          headers = [
-            ...headers,
-            {
-              text: this.$t('trans.submissionsTable.submissionDate'),
-              align: 'start',
-              value: 'date',
-            },
-          ];
-        }
-
-        if (
-          this.userFormPreferences.preferences.columns.includes('submitter')
-        ) {
-          headers = [
-            ...headers,
-            {
-              text: this.$t('trans.submissionsTable.submitter'),
-              align: 'start',
-              value: 'submitter',
-            },
-          ];
-        }
-
-        if (this.userFormPreferences.preferences.columns.includes('status')) {
-          headers = [
-            ...headers,
-            {
-              text: this.$t('trans.submissionsTable.status'),
-              align: 'start',
-              value: 'status',
-            },
-          ];
-        }
-      } else {
-        headers = [
-          ...headers,
-          {
-            text: this.$t('trans.submissionsTable.submissionDate'),
-            align: 'start',
-            value: 'date',
-          },
-          {
-            text: this.$t('trans.submissionsTable.submitter'),
-            align: 'start',
-            value: 'submitter',
-          },
-          {
-            text: this.$t('trans.submissionsTable.status'),
-            align: 'start',
-            value: 'status',
-          },
-        ];
-      }
 
       if (this.form && this.form.schedule && this.form.schedule.enabled) {
         //push new header for late submission if Form is setup for scheduling
@@ -436,19 +443,6 @@ export default {
           },
         ];
       }
-
-      // Add any custom columns if the user has them
-      const maxHeaderLength = 25;
-      this.userColumns.forEach((col) => {
-        headers.push({
-          text:
-            col.length > maxHeaderLength
-              ? `${col.substring(0, maxHeaderLength)}...`
-              : col,
-          align: 'end',
-          value: col,
-        });
-      });
 
       // Actions column at the end
       headers.push({
@@ -469,70 +463,72 @@ export default {
         sortable: false,
         width: '40px',
       });
-
-      return headers.filter((x) => x.value !== 'updatedAt' || this.deletedOnly);
-    },
-
-    HEADERS() {
-      let headers = this.DEFAULT_HEADERS;
-      if (this.filterData.length > 0)
-        headers = headers.filter(
-          (h) =>
-            this.filterData.some((fd) => fd.value === h.value) ||
-            this.filterIgnore.some((ign) => ign.value === h.value)
-        );
       return headers;
     },
+
     FILTER_HEADERS() {
-      let filteredHeader = this.DEFAULT_HEADERS.filter(
+      return [...this.DEFAULT_HEADER].filter(
         (h) => !this.filterIgnore.some((fd) => fd.value === h.value)
-      ).concat(
+      );
+    },
+
+    SELECT_COLUMNS_HEADERS() {
+      return [...this.FILTER_HEADERS].concat(
         this.formFields.map((ff) => {
           return { text: ff, value: ff, align: 'end' };
         })
       );
-
-      filteredHeader = [
-        {
-          text: this.$t('trans.submissionsTable.submissionDate'),
-          align: 'start',
-          value: 'date',
-        },
-        {
-          text: this.$t('trans.submissionsTable.submitter'),
-          align: 'start',
-          value: 'submitter',
-        },
-        {
-          text: this.$t('trans.submissionsTable.status'),
-          align: 'start',
-          value: 'status',
-        },
-        ...filteredHeader,
-      ];
-
-      return filteredHeader.filter(function (item, index, inputArray) {
-        return (
-          inputArray.findIndex((arrayItem) => arrayItem.value === item.value) ==
-          index
-        );
-      });
     },
+
+    HEADERS() {
+      let headers = this.DEFAULT_HEADER;
+      if (this.USER_PREFERENCES.length > 0) {
+        headers = [...this.DEFAULT_HEADER].filter(
+          (h) => !this.tableFilterIgnore.some((fd) => fd.value === h.value)
+        );
+
+        headers.splice(headers.length - 2, 0, ...this.USER_PREFERENCES);
+      }
+
+      return headers;
+    },
+
     PRESELECTED_DATA() {
+      return this.USER_PREFERENCES.length === 0
+        ? this.FILTER_HEADERS
+        : this.USER_PREFERENCES;
+    },
+    USER_PREFERENCES() {
       let preselectedData = [];
       if (this.userFormPreferences?.preferences?.columns) {
         preselectedData = this.userFormPreferences.preferences.columns.map(
           (column) => {
-            return {
-              align: 'end',
-              text: column,
-              value: column,
-            };
+            if (column === 'date') {
+              return {
+                text: this.$t('trans.submissionsTable.submissionDate'),
+                align: 'start',
+                value: 'date',
+              };
+            } else if (column === 'submitter') {
+              return {
+                text: this.$t('trans.submissionsTable.submitter'),
+                align: 'start',
+                value: 'submitter',
+              };
+            } else if (column === 'status') {
+              return {
+                text: this.$t('trans.submissionsTable.status'),
+                align: 'start',
+                value: 'status',
+              };
+            } else {
+              return {
+                align: 'start',
+                text: column,
+                value: column,
+              };
+            }
           }
-        );
-      } else {
-        preselectedData = this.DEFAULT_HEADERS.filter(
-          (h) => !this.filterIgnore.some((fd) => fd.value === h.value)
         );
       }
       return preselectedData;
@@ -583,6 +579,15 @@ export default {
       'updateFormPreferencesForCurrentUser',
     ]),
     ...mapActions('notifications', ['addNotification']),
+    onShowColumnDialog() {
+      this.SELECT_COLUMNS_HEADERS.sort(
+        (a, b) =>
+          this.PRESELECTED_DATA.findIndex((x) => x.text === b.text) -
+          this.PRESELECTED_DATA.findIndex((x) => x.text === a.text)
+      );
+
+      this.showColumnsDialog = true;
+    },
 
     async delSub() {
       this.singleSubmissionDelete
@@ -731,6 +736,7 @@ export default {
       this.selectedSubmissions = [];
     },
     async updateFilter(data) {
+      this.showColumnsDialog = false;
       this.filterData = data;
       let preferences = {
         columns: [],
@@ -743,7 +749,7 @@ export default {
         formId: this.form.id,
         preferences: preferences,
       });
-      this.showColumnsDialog = false;
+
       await this.populateSubmissionsTable();
     },
   },
@@ -761,7 +767,6 @@ export default {
 @media (min-width: 600px) {
   .submissions-search {
     max-width: 20em;
-    float: right;
   }
 }
 @media (max-width: 599px) {
@@ -779,6 +784,7 @@ export default {
     vertical-align: top;
   }
 }
+
 /* Want to use scss but the world hates me */
 .submissions-table >>> tbody tr:nth-of-type(odd) {
   background-color: #f5f5f5;

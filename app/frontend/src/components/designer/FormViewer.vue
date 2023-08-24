@@ -2,7 +2,13 @@
   <v-skeleton-loader :loading="loadingSubmission" type="article, actions">
     <div v-if="isFormScheduleExpired">
       <template>
-        <v-alert text prominent type="error">
+        <v-alert
+          text
+          prominent
+          type="error"
+          :class="{ 'dir-rtl': isRTL }"
+          :lang="lang"
+        >
           {{
             isLateSubmissionAllowed
               ? $t('trans.formViewer.lateFormSubmissions')
@@ -12,8 +18,14 @@
 
         <div v-if="isLateSubmissionAllowed">
           <v-col cols="3" md="2">
-            <v-btn color="primary" @click="isFormScheduleExpired = false">
-              <span>{{ $t('trans.formViewer.createLateSubmission') }}</span>
+            <v-btn
+              color="primary"
+              @click="isFormScheduleExpired = false"
+              :class="{ 'dir-rtl': isRTL }"
+            >
+              <span :lang="lang">{{
+                $t('trans.formViewer.createLateSubmission')
+              }}</span>
             </v-btn>
           </v-col>
         </div>
@@ -45,11 +57,12 @@
         <v-alert
           class="mt-2 mb-2"
           :value="saved || saving"
-          :class="
+          :class="[
             saving
               ? NOTIFICATIONS_TYPES.INFO.class
-              : NOTIFICATIONS_TYPES.SUCCESS.class
-          "
+              : NOTIFICATIONS_TYPES.SUCCESS.class,
+            { 'dir-rtl': isRTL },
+          ]"
           :color="
             saving
               ? NOTIFICATIONS_TYPES.INFO.color
@@ -62,35 +75,44 @@
           "
           transition="scale-transition"
         >
-          <div v-if="saving">
-            <v-progress-linear indeterminate />
+          <div v-if="saving" :class="{ 'mr-2': isRTL }">
+            <v-progress-linear indeterminate :lang="lang" />
             {{ $t('trans.formViewer.saving') }}
           </div>
-          <div v-else>{{ $t('trans.formViewer.draftSaved') }}</div>
+          <div v-else :class="{ 'mr-2': isRTL }" :lang="lang">
+            {{ $t('trans.formViewer.draftSaved') }}
+          </div>
         </v-alert>
 
-        <slot name="alert" v-bind:form="form" />
+        <slot name="alert" v-bind:form="form" :class="{ 'dir-rtl': isRTL }" />
 
         <BaseDialog
+          :class="{ 'dir-rtl': isRTL }"
           v-model="showSubmitConfirmDialog"
           type="CONTINUE"
           :enableCustomButton="canSaveDraft"
           @close-dialog="showSubmitConfirmDialog = false"
           @continue-dialog="continueSubmit"
         >
-          <template #title>{{ $t('trans.formViewer.pleaseConfirm') }}</template>
-          <template #text>{{
-            $t('trans.formViewer.submitFormWarningMsg')
-          }}</template>
+          <template #title
+            ><span :lang="lang">{{
+              $t('trans.formViewer.pleaseConfirm')
+            }}</span></template
+          >
+          <template #text
+            ><span :lang="lang">{{
+              $t('trans.formViewer.submitFormWarningMsg')
+            }}</span></template
+          >
           <template #button-text-continue>
-            <span>{{ $t('trans.formViewer.submit') }}</span>
+            <span :lang="lang">{{ $t('trans.formViewer.submit') }} </span>
           </template>
         </BaseDialog>
         <v-alert
           v-if="isLoading && !bulkFile && submissionId == undefined"
           class="mt-2 mb-2"
           :value="isLoading"
-          :class="NOTIFICATIONS_TYPES.INFO.class"
+          :class="[NOTIFICATIONS_TYPES.INFO.class]"
           :color="NOTIFICATIONS_TYPES.INFO.color"
           :icon="NOTIFICATIONS_TYPES.INFO.icon"
           transition="scale-transition"
@@ -101,9 +123,12 @@
               color="blue-grey lighten-4"
               height="5"
             ></v-progress-linear>
-            {{ $t('trans.formViewer.formLoading') }}
+            <span :class="{ 'mr-2': isRTL }" :lang="lang">
+              {{ $t('trans.formViewer.formLoading') }}
+            </span>
           </div>
         </v-alert>
+
         <FormViewerMultiUpload
           v-if="!isLoading && allowSubmitterToUploadFile && bulkFile"
           :response="sbdMessage"
@@ -131,14 +156,20 @@
           @customEvent="onCustomEvent"
           @change="formChange"
           @render="onFormRender"
-          :language="multiLanguage"
+          :language="lang"
         />
-        <p v-if="version" class="text-right">
+        <p
+          v-if="version"
+          :class="{ 'text-left': isRTL }"
+          class="mt-9"
+          :lang="lang"
+        >
           {{ $t('trans.formViewer.version', { version: version }) }}
         </p>
       </div>
     </div>
     <BaseDialog
+      :class="{ 'dir-rtl': isRTL }"
       v-model="doYouWantToSaveTheDraft"
       type="SAVEDDELETE"
       :enableCustomButton="false"
@@ -146,13 +177,21 @@
       @delete-dialog="no"
       @continue-dialog="yes"
     >
-      <template #title>{{ $t('trans.formViewer.pleaseConfirm') }}</template>
-      <template #text>{{ $t('trans.formViewer.wantToSaveDraft') }}</template>
+      <template #title
+        ><span :lang="lang">
+          {{ $t('trans.formViewer.pleaseConfirm') }}</span
+        ></template
+      >
+      <template #text
+        ><span :lang="lang">
+          {{ $t('trans.formViewer.wantToSaveDraft') }}</span
+        ></template
+      >
       <template #button-text-continue>
-        <span>{{ $t('trans.formViewer.yes') }}</span>
+        <span :lang="lang"> {{ $t('trans.formViewer.yes') }}</span>
       </template>
       <template #button-text-delete>
-        <span>{{ $t('trans.formViewer.no') }}</span>
+        <span :lang="lang"> {{ $t('trans.formViewer.no') }}</span>
       </template>
     </BaseDialog>
   </v-skeleton-loader>
@@ -239,6 +278,7 @@ export default {
         upload_state: Number,
         response: [],
         file_name: String,
+        typeError: Number,
       },
       block: false,
       doYouWantToSaveTheDraft: false,
@@ -255,7 +295,7 @@ export default {
       return this.$t('trans.formViewer.formScheduleExpireMessage');
     },
     ...mapGetters('auth', ['authenticated', 'token', 'tokenParsed', 'user']),
-    ...mapGetters('form', ['multiLanguage']),
+    ...mapGetters('form', ['lang', 'isRTL', 'lang']),
     NOTIFICATIONS_TYPES() {
       return NotificationTypes;
     },
@@ -291,7 +331,7 @@ export default {
     },
   },
   watch: {
-    multiLanguage() {
+    lang() {
       this.reRenderFormIo += 1;
     },
   },
@@ -310,33 +350,64 @@ export default {
       function iterate(obj, stack, fields, propNeeded) {
         //Get property path from nested object
         for (let property in obj) {
-          if (typeof obj[property] == 'object') {
+          const innerObject = obj[property];
+
+          if (propNeeded === property) {
+            fields = fields + stack + '.' + property;
+            return fields.replace(/^\./, '');
+          } else if (Array.isArray(innerObject)) {
+            // When the form contains a Data Grid there will be an array that
+            // needs to be checked, and an array of properties to be unset.
+            const fieldsArray = [];
+            for (let i = 0; i < innerObject.length; i++) {
+              const next = iterate(
+                innerObject[i],
+                stack + '.' + property + '[' + i + ']',
+                fields,
+                propNeeded
+              );
+
+              if (next) {
+                fieldsArray.push(next);
+              }
+            }
+
+            if (fieldsArray.length > 0) {
+              return fieldsArray;
+            }
+          } else if (typeof innerObject === 'object') {
             return iterate(
-              obj[property],
+              innerObject,
               stack + '.' + property,
               fields,
               propNeeded
             );
-          } else if (propNeeded === property) {
-            fields = fields + stack + '.' + property;
-            return fields;
           }
         }
       }
 
       function deleteFieldData(fieldcomponent, submission) {
-        if (
-          Object.prototype.hasOwnProperty.call(fieldcomponent, 'components')
-        ) {
-          fieldcomponent.components.map((subComponent) => {
-            // Check if it's a Nested component
+        if (Object.prototype.hasOwnProperty.call(fieldcomponent, 'columns')) {
+          // It's a layout component that has columns.
+          fieldcomponent.columns.map((subComponent) => {
             deleteFieldData(subComponent, submission);
           });
-        } else if (!fieldcomponent?.validate?.isUseForCopy) {
-          _.unset(
-            submission,
-            iterate(submission, '', '', fieldcomponent.key).replace(/^\./, '')
-          );
+        } else if (
+          Object.prototype.hasOwnProperty.call(fieldcomponent, 'components')
+        ) {
+          // It's a layout component that has subcomponents, such as a panel.
+          fieldcomponent.components.map((subComponent) => {
+            deleteFieldData(subComponent, submission);
+          });
+        } else if (fieldcomponent?.validate?.isUseForCopy === false) {
+          const fieldPath = iterate(submission, '', '', fieldcomponent.key);
+          if (Array.isArray(fieldPath)) {
+            for (let path of fieldPath) {
+              _.unset(submission, path);
+            }
+          } else if (fieldPath) {
+            _.unset(submission, fieldPath);
+          }
         }
       }
 
@@ -379,7 +450,8 @@ export default {
         this.addNotification({
           message: this.$t('trans.formViewer.getUsersSubmissionsErrMsg'),
           consoleError: this.$t(
-            'trans.formViewer.getUsersSubmissionsConsoleErrMsg'
+            'trans.formViewer.getUsersSubmissionsConsoleErrMsg',
+            { submissionId: this.submissionId, error: error }
           ),
         });
       } finally {
@@ -485,6 +557,7 @@ export default {
       this.sbdMessage.upload_state = 0;
       this.sbdMessage.response = [];
       this.sbdMessage.file_name = undefined;
+      this.sbdMessage.typeError = -1;
       this.block = false;
     },
     async saveBulkData(submissions) {
@@ -597,6 +670,171 @@ export default {
           'error_report_' + this.form.name + '_' + Date.now();
       }
     },
+    buildValidationFromComponent(obj) {
+      if (obj?.component?.validate) {
+        let validatorIdentity = '';
+        Object.keys(obj.component.validate).forEach((validity) => {
+          switch (validity) {
+            case 'maxSelectedCount':
+              if (obj.component.validate.maxSelectedCount) {
+                validatorIdentity +=
+                  '|maxSelectedCount:' + obj.component.validate[validity];
+              }
+              break;
+
+            case 'minSelectedCount':
+              if (obj.component.validate.minSelectedCount) {
+                validatorIdentity +=
+                  '|minSelectedCount:' + obj.component.validate[validity];
+              }
+              break;
+
+            case 'multiple':
+              if (obj.component.validate.multiple) {
+                validatorIdentity +=
+                  '|multiple:' + obj.component.validate[validity];
+              }
+              break;
+
+            case 'onlyAvailableItems':
+              if (obj.component.validate.onlyAvailableItems) {
+                validatorIdentity +=
+                  '|onlyAvailableItems:' + obj.component.validate[validity];
+              }
+              break;
+
+            case 'required':
+              if (obj.component.validate.required) {
+                validatorIdentity +=
+                  '|required:' + obj.component.validate[validity];
+              }
+              break;
+
+            case 'strictDateValidation':
+              if (obj.component.validate.strictDateValidation) {
+                validatorIdentity +=
+                  '|strictDateValidation:' + obj.component.validate[validity];
+              }
+              break;
+
+            case 'unique':
+              if (obj.component.validate.unique) {
+                validatorIdentity +=
+                  '|unique:' + obj.component.validate[validity];
+              }
+              break;
+
+            case 'custom':
+              if (obj.component.validate.custom.length) {
+                validatorIdentity +=
+                  '|custom:' + obj.component.validate[validity].trim();
+              }
+              break;
+
+            case 'customMessage':
+              if (obj.component.validate.customMessage) {
+                validatorIdentity +=
+                  '|customMessage:' + obj.component.validate[validity].trim();
+              }
+              break;
+
+            case 'customPrivate':
+              if (obj.component.validate.customPrivate) {
+                validatorIdentity +=
+                  '|customPrivate:' + obj.component.validate[validity].trim();
+              }
+              break;
+
+            case 'json':
+              if (obj.component.validate.json) {
+                validatorIdentity +=
+                  '|json:' + obj.component.validate[validity];
+              }
+              break;
+
+            case 'pattern':
+              if (obj.component.validate.pattern) {
+                validatorIdentity +=
+                  '|pattern:' + obj.component.validate[validity];
+              }
+              break;
+
+            case 'maxWords':
+              if (obj.component.validate.maxWords) {
+                validatorIdentity +=
+                  '|maxWords:' + obj.component.validate[validity];
+              }
+              break;
+
+            case 'minWords':
+              if (obj.component.validate.minWords) {
+                validatorIdentity +=
+                  '|minWords:' + obj.component.validate[validity];
+              }
+              break;
+
+            case 'maxLength':
+              if (obj.component.validate.maxLength) {
+                validatorIdentity +=
+                  '|maxLength:' + obj.component.validate[validity];
+              }
+              break;
+
+            case 'minLength':
+              if (obj.component.validate.minLength) {
+                validatorIdentity +=
+                  '|minLength:' + obj.component.validate[validity];
+              }
+              break;
+
+            default:
+              validatorIdentity +=
+                '|' + validity + ':' + obj.component.validate[validity];
+              break;
+          }
+        });
+        return validatorIdentity.replace(/^\|/, '');
+      } else if (obj?.messages[0]?.context?.validator) {
+        return obj.messages[0].context.validator;
+      } else {
+        return 'Unknown';
+      }
+    },
+
+    async frontendFormatResponse(response) {
+      let newResponse = [];
+
+      for (const item of response) {
+        if (item != null && item != undefined) {
+          for (const obj of item.errors) {
+            let error = {};
+
+            if (obj.component != undefined) {
+              error = {
+                submission: item.submission,
+                key: obj.component.key,
+                label: obj.component.label,
+                validator: this.buildValidationFromComponent(obj),
+                error_message: obj.message,
+              };
+            } else {
+              error = {
+                submission: item.submission,
+                key: null,
+                label: null,
+                validator: null,
+                error_message: obj.message,
+              };
+            }
+
+            newResponse.push(error);
+          }
+        }
+      }
+
+      return newResponse;
+    },
+
     async formatResponse(response) {
       let newResponse = [];
       await response.forEach((item, index) => {
@@ -626,8 +864,43 @@ export default {
       });
       return newResponse;
     },
-    setError(data) {
-      this.sbdMessage = data;
+    async setError(error) {
+      this.sbdMessage = error;
+
+      try {
+        if (error.response.data != undefined) {
+          this.sbdMessage.message =
+            error.response.data.title == undefined
+              ? 'An error occurred submitting this form'
+              : error.response.data.title;
+          this.sbdMessage.error = true;
+          this.sbdMessage.upload_state = 10;
+          this.sbdMessage.response =
+            error.response.data.reports == undefined
+              ? [{ error_message: 'An error occurred submitting this form' }]
+              : await this.frontendFormatResponse(error.response.data.reports);
+          this.sbdMessage.file_name =
+            'error_report_' + this.form.name + '_' + Date.now();
+        } else {
+          this.sbdMessage.message = 'An error occurred submitting this form';
+          this.sbdMessage.error = true;
+          this.sbdMessage.upload_state = 10;
+          this.sbdMessage.response = [
+            { error_message: 'An error occurred submitting this form' },
+          ];
+          this.sbdMessage.file_name =
+            'error_report_' + this.form.name + '_' + Date.now();
+        }
+      } catch (error_2) {
+        this.sbdMessage.message = 'An error occurred submitting this form';
+        this.sbdMessage.error = true;
+        this.sbdMessage.upload_state = 10;
+        this.sbdMessage.response = [
+          { error_message: 'An error occurred submitting this form' },
+        ];
+        this.sbdMessage.file_name =
+          'error_report_' + this.form.name + '_' + Date.now();
+      }
     },
     // Custom Event triggered from buttons with Action type "Event"
     async saveDraft() {
@@ -929,9 +1202,10 @@ export default {
   },
   async created() {
     if (this.submissionId && this.isDuplicate) {
-      //Run when make new submission from existing one called.
+      // Run when make new submission from existing one called. Get the
+      // published version of form, and then get the submission data.
+      await this.getFormSchema();
       await this.getFormData();
-      await this.getFormSchema(); //We need this to be called as well, because we need latest version of form
     } else if (this.submissionId && !this.isDuplicate) {
       await this.getFormData();
     } else {

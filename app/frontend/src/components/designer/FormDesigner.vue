@@ -1,69 +1,82 @@
 <template>
   <div>
-    <v-row class="mt-6" no-gutters>
-      <!-- page title -->
-      <v-col cols="12" sm="6" order="2" order-sm="1">
-        <h1>{{ $t('trans.formDesigner.formDesign') }}</h1>
-      </v-col>
-      <!-- buttons -->
-      <v-col class="text-right" cols="12" sm="6" order="1" order-sm="2">
-        <v-tooltip bottom>
-          <template #activator="{ on, attrs }">
-            <v-btn
-              class="mx-1"
-              @click="onExportClick"
-              color="primary"
-              icon
-              v-bind="attrs"
-              v-on="on"
-            >
-              <v-icon>get_app</v-icon>
-            </v-btn>
-          </template>
-          <span>{{ $t('trans.formDesigner.exportDesign') }}</span>
-        </v-tooltip>
-        <v-tooltip bottom>
-          <template #activator="{ on, attrs }">
-            <v-btn
-              class="mx-1"
-              @click="$refs.uploader.click()"
-              color="primary"
-              icon
-              v-bind="attrs"
-              v-on="on"
-            >
-              <v-icon>publish</v-icon>
-              <input
-                class="d-none"
-                @change="loadFile"
-                ref="uploader"
-                type="file"
-                accept=".json"
-              />
-            </v-btn>
-          </template>
-          <span>{{ $t('trans.formDesigner.importDesign') }}</span>
-        </v-tooltip>
-      </v-col>
-      <!-- form name -->
-      <v-col cols="12" order="3">
-        <h3 v-if="name">{{ name }}</h3>
-      </v-col>
-      <!-- version number-->
-      <v-col cols="12" order="4">
-        <em
-          >{{ $t('trans.formDesigner.version') }} :
-          {{ this.displayVersion }}</em
-        >
-      </v-col>
-    </v-row>
-    <BaseInfoCard class="my-6">
-      <h4 class="primary--text">
-        <v-icon class="mr-1" color="primary">info</v-icon
+    <div :class="{ 'dir-rtl': isRTL }">
+      <div
+        class="mt-6 d-flex flex-md-row justify-space-between flex-sm-row flex-xs-column-reverse"
+      >
+        <!-- page title -->
+        <div>
+          <h1 :lang="lang">
+            {{ $t('trans.formDesigner.formDesign') }}
+          </h1>
+          <h3 v-if="name">{{ name }}</h3>
+          <em :lang="lang"
+            >{{ $t('trans.formDesigner.version') }} :
+            {{ this.displayVersion }}</em
+          >
+        </div>
+        <!-- buttons -->
+        <div>
+          <v-tooltip bottom>
+            <template #activator="{ on, attrs }">
+              <v-btn
+                class="mx-1"
+                @click="onExportClick"
+                color="primary"
+                icon
+                v-bind="attrs"
+                v-on="on"
+              >
+                <v-icon>get_app</v-icon>
+              </v-btn>
+            </template>
+            <span :lang="lang">{{
+              $t('trans.formDesigner.exportDesign')
+            }}</span>
+          </v-tooltip>
+          <v-tooltip bottom>
+            <template #activator="{ on, attrs }">
+              <v-btn
+                class="mx-1"
+                @click="$refs.uploader.click()"
+                color="primary"
+                icon
+                v-bind="attrs"
+                v-on="on"
+              >
+                <v-icon>publish</v-icon>
+                <input
+                  class="d-none"
+                  @change="loadFile"
+                  ref="uploader"
+                  type="file"
+                  accept=".json"
+                />
+              </v-btn>
+            </template>
+            <span :lang="lang">{{
+              $t('trans.formDesigner.importDesign')
+            }}</span>
+          </v-tooltip>
+        </div>
+        <!-- form name -->
+      </div>
+    </div>
+    <BaseInfoCard class="my-6" :class="{ 'dir-rtl': isRTL }">
+      <h4 class="primary--text" :lang="lang">
+        <v-icon :class="isRTL ? 'ml-1' : 'mr-1'" color="primary">info</v-icon
         >{{ $t('trans.formDesigner.important') }}!
       </h4>
-      <p class="my-0" v-html="$t('trans.formDesigner.formDesignInfoA')"></p>
-      <p class="my-0" v-html="$t('trans.formDesigner.formDesignInfoB')"></p>
+      <p
+        class="my-0"
+        v-html="$t('trans.formDesigner.formDesignInfoA')"
+        :lang="lang"
+      />
+      <p
+        class="my-0"
+        v-html="$t('trans.formDesigner.formDesignInfoB')"
+        :lang="lang"
+      />
     </BaseInfoCard>
     <FormBuilder
       :form="formSchema"
@@ -182,8 +195,9 @@ export default {
     ...mapGetters('form', [
       'fcProactiveHelpGroupList',
       'fcProactiveHelpImageUrl',
-      'multiLanguage',
+      'lang',
       'builder',
+      'isRTL',
     ]),
     ...mapGetters('auth', ['tokenParsed', 'user']),
     ...mapFields('form', [
@@ -196,6 +210,7 @@ export default {
       'form.sendSubRecieviedEmail',
       'form.allowSubmitterToUploadFile',
       'form.showSubmissionConfirmation',
+      'form.subscribe',
       'form.snake',
       'form.submissionReceivedEmails',
       'form.userType',
@@ -284,6 +299,7 @@ export default {
               // Prevent duplicate appearance of orgbook component
               orgbook: false,
               bcaddress: false,
+              simplebcaddress: false,
             },
           },
           data: {
@@ -297,10 +313,11 @@ export default {
               orgbook: true,
               simplefile: this.userType !== this.ID_MODE.PUBLIC,
               bcaddress: true,
+              simplebcaddress: true,
             },
           },
         },
-        language: this.multiLanguage ? this.multiLanguage : 'en',
+        language: this.lang ? this.lang : 'en',
         i18n: formioIl8next,
         templates: templateExtensions,
         evalContext: {
@@ -762,7 +779,7 @@ export default {
     userType() {
       this.reRenderFormIo += 1;
     },
-    multiLanguage(value) {
+    lang(value) {
       if (value) {
         this.reRenderFormIo += 1;
       }
@@ -799,7 +816,6 @@ export default {
 
   position: -webkit-sticky;
 }
-
 .formSetting {
   position: sticky;
   top: 0;

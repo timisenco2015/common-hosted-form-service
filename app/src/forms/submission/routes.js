@@ -66,7 +66,7 @@ routes.use(currentUser);
  *                - $ref: '#/components/schemas/respError/SubmissionAccessError'
  *                - $ref: '#/components/schemas/respError/SubmissionIdNotFoundError'
  */
-routes.get('/:formSubmissionId', hasSubmissionPermissions(P.SUBMISSION_READ), async (req, res, next) => {
+routes.get('/:formSubmissionId', apiAccess, hasSubmissionPermissions(P.SUBMISSION_READ), async (req, res, next) => {
   await controller.read(req, res, next);
 });
 

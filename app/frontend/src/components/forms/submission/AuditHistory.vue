@@ -1,5 +1,5 @@
 <template>
-  <span>
+  <span :class="{ 'dir-rtl': isRTL }">
     <v-tooltip bottom>
       <template #activator="{ on, attrs }">
         <v-btn
@@ -13,27 +13,34 @@
           <v-icon>history</v-icon>
         </v-btn>
       </template>
-      <span>{{ $t('trans.auditHistory.viewEditHistory') }}</span>
+      <span :class="{ 'dir-rtl': isRTL }" :lang="lang">{{
+        $t('trans.auditHistory.viewEditHistory')
+      }}</span>
     </v-tooltip>
 
     <v-dialog v-model="dialog" width="900">
       <v-card>
-        <v-card-title class="text-h5 pb-0">{{
-          $t('trans.auditHistory.editHistory')
-        }}</v-card-title>
+        <v-card-title
+          class="text-h5 pb-0"
+          :class="{ 'dir-rtl': isRTL }"
+          :lang="lang"
+          >{{ $t('trans.auditHistory.editHistory') }}</v-card-title
+        >
         <v-card-text>
           <hr />
-          <p>
+          <p :class="{ 'dir-rtl': isRTL }" :lang="lang">
             {{ $t('trans.auditHistory.auditLogMsg') }}
           </p>
 
           <v-data-table
+            :class="{ 'dir-rtl': isRTL }"
             :headers="headers"
             :items="history"
             :loading="loading"
             :loading-text="$t('trans.auditHistory.loadingText')"
             item-key="id"
             class="status-table"
+            :lang="lang"
           >
             <template #[`item.actionTimestamp`]="{ item }">
               {{ item.actionTimestamp | formatDateLong }}
@@ -43,7 +50,7 @@
 
         <v-card-actions class="justify-center">
           <v-btn class="mb-5 close-dlg" color="primary" @click="dialog = false">
-            <span>{{ $t('trans.auditHistory.close') }}</span>
+            <span :lang="lang">{{ $t('trans.auditHistory.close') }}</span>
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -52,7 +59,8 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
+
 import formService from '@/services/formService.js';
 
 export default {
@@ -80,6 +88,7 @@ export default {
         { text: this.$t('trans.auditHistory.date'), value: 'actionTimestamp' },
       ];
     },
+    ...mapGetters('form', ['isRTL', 'lang']),
   },
   methods: {
     ...mapActions('notifications', ['addNotification']),

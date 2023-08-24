@@ -1,14 +1,21 @@
 <template>
-  <div>
-    <v-btn color="primary" text small @click="displayDialog">
+  <div :class="{ 'dir-rtl': isRTL }">
+    <v-btn
+      color="primary"
+      text
+      small
+      @click="displayDialog"
+      :class="{ 'dir-rtl': isRTL }"
+    >
       <v-icon class="mr-1">email</v-icon>
-      <span>{{ $t('trans.requestReceipt.emailReceipt') }}</span>
+      <span :lang="lang">{{ $t('trans.requestReceipt.emailReceipt') }}</span>
     </v-btn>
 
     <BaseDialog
       v-model="showDialog"
       type="CONTINUE"
       @close-dialog="showDialog = false"
+      :class="{ 'dir-rtl': isRTL }"
       @continue-dialog="requestReceipt()"
     >
       <template #icon>
@@ -30,18 +37,31 @@
             :rules="emailRules"
             v-model="to"
             data-test="text-form-to"
+            :lang="lang"
+          />
+          <v-select
+            dense
+            outlined
+            :items="[
+              { text: $t('trans.requestReceipt.low'), value: 'low' },
+              { text: $t('trans.requestReceipt.normal'), value: 'normal' },
+              { text: $t('trans.requestReceipt.high'), value: 'high' },
+            ]"
+            :label="$t('trans.requestReceipt.emailPriority')"
+            :lang="lang"
+            v-model="priority"
           />
         </v-form>
       </template>
       <template v-slot:button-text-continue>
-        <span>{{ $t('trans.requestReceipt.send') }}</span>
+        <span :lang="lang">{{ $t('trans.requestReceipt.send') }}</span>
       </template>
     </BaseDialog>
   </div>
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
 
 import { NotificationTypes } from '@/utils/constants';
 import { formService } from '@/services';
@@ -50,6 +70,7 @@ export default {
   name: 'RequestReceipt',
   data: () => ({
     emailRules: [(v) => !!v || this.$t('trans.requestReceipt.emailRequired')],
+    priority: 'normal',
     showDialog: false,
     to: '',
     valid: false,
@@ -63,6 +84,7 @@ export default {
       if (this.valid) {
         try {
           await formService.requestReceiptEmail(this.submissionId, {
+            priority: this.priority,
             to: this.to,
           });
           this.addNotification({
@@ -86,6 +108,9 @@ export default {
       this.to = this.email;
       this.valid = false;
     },
+  },
+  computed: {
+    ...mapGetters('form', ['isRTL', 'lang']),
   },
   mounted() {
     this.resetDialog();

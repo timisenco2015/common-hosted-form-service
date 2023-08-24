@@ -1,5 +1,5 @@
 <template>
-  <span>
+  <span :class="{ 'dir-rtl': isRTL }">
     <v-tooltip bottom>
       <template #activator="{ on, attrs }">
         <v-btn
@@ -13,7 +13,7 @@
           <v-icon>print</v-icon>
         </v-btn>
       </template>
-      <span>{{ $t('trans.printOptions.print') }}</span>
+      <span :lang="lang">{{ $t('trans.printOptions.print') }} </span>
     </v-tooltip>
 
     <v-dialog
@@ -21,35 +21,41 @@
       width="900"
       content-class="export-submissions-dlg"
     >
-      <v-card>
-        <v-card-title class="text-h5 pb-0">{{
+      <v-card :class="{ 'dir-rtl': isRTL }">
+        <v-card-title class="text-h5 pb-0" :lang="lang">{{
           $t('trans.printOptions.downloadOptions')
         }}</v-card-title>
         <v-card-text>
           <hr />
-          <p>
+          <p :lang="lang">
             <strong>1. </strong>
             <a
               href="https://github.com/bcgov/common-hosted-form-service/wiki/Printing-from-a-browser"
               target="blank"
+              :hreflang="lang"
               >{{ $t('trans.printOptions.print') }}</a
             >
             {{ $t('trans.printOptions.pageFromBrowser') }}
           </p>
           <v-btn class="mb-5 mr-5" color="primary" @click="printBrowser">
-            <span>{{ $t('trans.printOptions.browserPrint') }}</span>
+            <span :lang="lang">{{
+              $t('trans.printOptions.browserPrint')
+            }}</span>
           </v-btn>
 
-          <p>
+          <p :lang="lang">
             <strong>2.</strong> {{ $t('trans.printOptions.uploadA') }}
             <a
               href="https://github.com/bcgov/common-hosted-form-service/wiki/CDOGS-Template-Upload"
               target="blank"
+              :hreflang="lang"
               >{{ $t('trans.printOptions.cDogsTemplate') }}</a
             >
             {{ $t('trans.printOptions.uploadB') }}
           </p>
           <v-file-input
+            :class="{ label: isRTL }"
+            :style="isRTL ? { gap: '10px' } : null"
             counter
             :clearable="true"
             :label="$t('trans.printOptions.uploadTemplateFile')"
@@ -59,7 +65,15 @@
             mandatory
             show-size
             v-model="templateForm.files"
-          />
+            :lang="lang"
+          >
+            <template v-slot:prepend>
+              <span class="label">
+                <v-icon>attachment</v-icon>
+              </span>
+            </template>
+          </v-file-input>
+
           <v-card-actions>
             <v-tooltip top>
               <template #activator="{ on }">
@@ -73,10 +87,14 @@
                   v-on="on"
                 >
                   <v-icon :left="$vuetify.breakpoint.smAndUp">save</v-icon>
-                  <span>{{ $t('trans.printOptions.templatePrint') }}</span>
+                  <span :lang="lang">{{
+                    $t('trans.printOptions.templatePrint')
+                  }}</span>
                 </v-btn>
               </template>
-              <span>{{ $t('trans.printOptions.submitButtonTxt') }}</span>
+              <span :lang="lang">{{
+                $t('trans.printOptions.submitButtonTxt')
+              }}</span>
             </v-tooltip>
           </v-card-actions>
         </v-card-text>
@@ -86,7 +104,7 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
 import { formService, utilsService } from '@/services';
 import { NotificationTypes } from '@/utils/constants';
 
@@ -110,10 +128,12 @@ export default {
       default: undefined,
     },
   },
+
   computed: {
     files() {
       return this.templateForm.files;
     },
+    ...mapGetters('form', ['isRTL', 'lang']),
   },
   methods: {
     ...mapActions('notifications', ['addNotification']),
