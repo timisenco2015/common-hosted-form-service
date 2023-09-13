@@ -102,19 +102,13 @@ routes.get('/idps', async (req, res, next) => {
  *    security:
  *      - bearerAuth: []
  *        openId: []
- *    requestBody:
- *      required: true
- *      content:
- *        application/json:
- *          schema:
- *            $ref: '#/components/requestBodies/FormReqCreateDraft'
  *    parameters:
  *      - in: query
- *        name: formSubmissionId
+ *        name: formId
  *        schema:
  *          type: string
  *          format: uuid
- *        description: ID of the form submission.
+ *        description: ID of the form.
  *        required: true
  *        example: c6455376-382c-439d-a811-0381a012d696
  *      - in: query
@@ -215,6 +209,8 @@ routes.get('/idps', async (req, res, next) => {
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *      '403':
  *        $ref: '#/components/responses/Error/AccessDenied'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
  */
@@ -277,6 +273,8 @@ routes.put('/forms', hasFormPermissions(P.TEAM_UPDATE), async (req, res, next) =
  *        $ref: '#/components/responses/Error/UnExpected'
  *      '404':
  *        $ref: '#/components/responses/Error/ResourceNotFound'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
  */
 routes.get('/submissions', hasSubmissionPermissions(P.SUBMISSION_READ), async (req, res, next) => {
   await controller.getSubmissionUsers(req, res, next);
@@ -346,10 +344,12 @@ routes.get('/submissions', hasSubmissionPermissions(P.SUBMISSION_READ), async (r
  *                - $ref: '#/components/schemas/respError/SubmissionAccessError'
  *      '403':
  *        $ref: '#/components/responses/Error/AccessDenied'
- *      '5XX':
- *        $ref: '#/components/responses/Error/UnExpected'
  *      '404':
  *        $ref: '#/components/responses/Error/ResourceNotFound'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
+ *      '5XX':
+ *        $ref: '#/components/responses/Error/UnExpected'
  */
 routes.put('/submissions', hasSubmissionPermissions(P.SUBMISSION_UPDATE), async (req, res, next) => {
   await controller.setSubmissionUserPermissions(req, res, next);
@@ -459,6 +459,8 @@ routes.put('/submissions', hasSubmissionPermissions(P.SUBMISSION_UPDATE), async 
  *              $ref: '#/components/responses/responseBody/RBACGetUsersForms'
  *      '403':
  *        $ref: '#/components/responses/Error/AccessDenied'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
  */
@@ -537,6 +539,10 @@ routes.get('/users', keycloak.protect(`${config.get('server.keycloak.clientId')}
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *      '403':
  *        $ref: '#/components/responses/Error/AccessDenied'
+ *      '404':
+ *        $ref: '#/components/responses/Error/ResourceNotFound'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
  */
@@ -586,6 +592,10 @@ routes.put('/users', hasFormPermissions(P.TEAM_UPDATE), hasFormRoles([R.OWNER, R
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *      '403':
  *        $ref: '#/components/responses/Error/AccessDenied'
+ *      '404':
+ *        $ref: '#/components/responses/Error/ResourceNotFound'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
  */

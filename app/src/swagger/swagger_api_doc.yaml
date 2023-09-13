@@ -1,5 +1,5 @@
 definition:
-  openapi: 3.0.3
+  openapi: 3.0.0
   info:
     title: Common Hosted Form Service (CHEFS)
     description: The API for an application for teams to create, manage and publish web forms. These back-end operations can work for different form builder tools that define the form as a json schema. Form management features include role-based access for administrators, form versioning, submission review and export, as well as notifications, document generation and reporting.
@@ -50,8 +50,8 @@ definition:
             application/json:
               schema:
                 $ref: '#/components/schemas/respError/SubmissionIdNotFoundError'
-        UnprocessableEntityDB:
-          description: Unauthorized
+        UnprocessableEntity:
+          description: Unprocessable Entity
           content:
             application/json:
               schema:
@@ -74,6 +74,12 @@ definition:
             application/json:
               schema:
                 $ref: '#/components/schemas/respError/AccessDeniedError'
+        BadRequest:
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/respError/BadRequestError'
         UpdateRolePermission:
           description: Update Role Permission
           content:
@@ -3076,6 +3082,12 @@ definition:
             example: true
             description: A form submission reminder will be sent to users if set to true.
             default: false
+          shedule:
+            type: object
+            description: Form submissions schedule settings
+          subscribe:
+            type: object
+            description: Form event subscription settings
       FormReqSubmissionExport:
         type: object
         properties:
@@ -4151,6 +4163,21 @@ definition:
                   example: {}
                 title:
                   example: Unauthorized
+                type:
+                  example: https://httpstatuses.com/401
+        BadRequestError:
+          allOf:
+            - $ref: '#/components/schemas/Problem'
+            - type: object
+              properties:
+                detail:
+                  example: Incorrect Submission status.
+                error:
+                  example: {}
+                status:
+                  example: 400
+                title:
+                  example: Bad Request
                 type:
                   example: https://httpstatuses.com/401
         SubmissionAccessError:

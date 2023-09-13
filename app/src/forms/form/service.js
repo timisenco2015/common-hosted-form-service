@@ -157,7 +157,7 @@ const service = {
       await FormIdentityProvider.query(trx).delete().where('formId', obj.id);
 
       // insert any new identity providers
-      const fIdps = data.identityProviders.map((p) => ({
+      const fIdps = data?.identityProviders?.map((p) => ({
         id: uuidv4(),
         formId: obj.id,
         code: p.code,

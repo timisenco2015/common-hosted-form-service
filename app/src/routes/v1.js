@@ -40,6 +40,11 @@ router.get('/docs', (_req, res) => {
 });
 
 /** OpenAPI YAML Spec */
+router.get('/api-spec.json', (_req, res) => {
+  res.status(200).type('application/json').send(swaggerSpec);
+});
+
+/** OpenAPI YAML Spec */
 router.get('/api-spec.yaml', (_req, res) => {
   res.status(200).type('application/yaml').send(yaml.dump(swaggerSpec));
 });

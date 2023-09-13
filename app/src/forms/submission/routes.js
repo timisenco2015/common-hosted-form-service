@@ -16,6 +16,7 @@ routes.use(currentUser);
  *    summary: Get a form submission
  *    description: This endpoint will fetch submission details for the submission ID.
  *    security:
+ *      - basicAuth: []
  *      - bearerAuth: []
  *        openId: []
  *    parameters:
@@ -53,10 +54,16 @@ routes.use(currentUser);
  *                example: {}
  *      '403':
  *        $ref: '#/components/responses/Error/Forbidden'
- *      '404':
- *        $ref: '#/components/responses/Error/NotFound'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
+ *      '404':
+ *        description: Not Found
+ *        content:
+ *          application/json:
+ *            schema:
+ *              oneOf:
+ *                - $ref: '#/components/schemas/respError/ResourceNotFoundError'
+ *                - $ref: '#/components/schemas/respError/NotFoundError'
  *      '401':
  *        description: Unauthorized
  *        content:
@@ -120,12 +127,8 @@ routes.get('/:formSubmissionId', apiAccess, hasSubmissionPermissions(P.SUBMISSIO
  *                  type: object
  *                  description: Version Details.
  *                  example: {}
- *      '403':
- *        $ref: '#/components/responses/Error/Forbidden'
- *      '404':
- *        $ref: '#/components/responses/Error/NotFound'
- *      '5XX':
- *        $ref: '#/components/responses/Error/UnExpected'
+ *      '400':
+ *        $ref: '#/components/responses/Error/BadRequest'
  *      '401':
  *        description: Unauthorized
  *        content:
@@ -134,6 +137,18 @@ routes.get('/:formSubmissionId', apiAccess, hasSubmissionPermissions(P.SUBMISSIO
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/SubmissionAccessError'
  *                - $ref: '#/components/schemas/respError/SubmissionIdNotFoundError'
+ *      '403':
+ *        $ref: '#/components/responses/Error/Forbidden'
+ *      '404':
+ *        description: Not Found
+ *        content:
+ *          application/json:
+ *            schema:
+ *              oneOf:
+ *                - $ref: '#/components/schemas/respError/ResourceNotFoundError'
+ *                - $ref: '#/components/schemas/respError/NotFoundError'
+ *      '5XX':
+ *        $ref: '#/components/responses/Error/UnExpected'
  */
 routes.put('/:formSubmissionId', hasSubmissionPermissions(P.SUBMISSION_UPDATE), async (req, res, next) => {
   await controller.update(req, res, next);
@@ -175,7 +190,7 @@ routes.put('/:formSubmissionId', hasSubmissionPermissions(P.SUBMISSION_UPDATE), 
  *      '403':
  *        $ref: '#/components/responses/Error/Forbidden'
  *      '404':
- *        $ref: '#/components/responses/Error/NotFound'
+ *        $ref: '#/components/responses/Error/ResourceNotFound'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
  *      '401':
@@ -235,12 +250,6 @@ routes.delete('/:formSubmissionId', hasSubmissionPermissions(P.SUBMISSION_DELETE
  *            schema:
  *              type: object
  *              description: form submission details for the formSubmissionId in the request parameter
- *      '403':
- *        $ref: '#/components/responses/Error/Forbidden'
- *      '404':
- *        $ref: '#/components/responses/Error/NotFound'
- *      '5XX':
- *        $ref: '#/components/responses/Error/UnExpected'
  *      '401':
  *        description: Unauthorized
  *        content:
@@ -253,6 +262,14 @@ routes.delete('/:formSubmissionId', hasSubmissionPermissions(P.SUBMISSION_DELETE
  *                - $ref: '#/components/schemas/respError/SubmissnDelOrRestorePermissnError'
  *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/RequiredSubmissionPermissionError'
+ *      '403':
+ *        $ref: '#/components/responses/Error/Forbidden'
+ *      '404':
+ *        $ref: '#/components/responses/Error/ResourceNotFound'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
+ *      '5XX':
+ *        $ref: '#/components/responses/Error/UnExpected'
  */
 routes.put('/:formSubmissionId/:formId/submissions/restore', hasSubmissionPermissions(P.SUBMISSION_DELETE), filterMultipleSubmissions(), async (req, res, next) => {
   await controller.restoreMutipleSubmissions(req, res, next);
@@ -301,12 +318,6 @@ routes.put('/:formSubmissionId/:formId/submissions/restore', hasSubmissionPermis
  *            schema:
  *              type: object
  *              description: form submission details for the formSubmissionId in the request parameter
- *      '403':
- *        $ref: '#/components/responses/Error/Forbidden'
- *      '404':
- *        $ref: '#/components/responses/Error/NotFound'
- *      '5XX':
- *        $ref: '#/components/responses/Error/UnExpected'
  *      '401':
  *        description: Unauthorized
  *        content:
@@ -315,6 +326,14 @@ routes.put('/:formSubmissionId/:formId/submissions/restore', hasSubmissionPermis
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/SubmissionIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/SubmissionAccessError'
+ *      '403':
+ *        $ref: '#/components/responses/Error/Forbidden'
+ *      '404':
+ *        $ref: '#/components/responses/Error/ResourceNotFound'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
+ *      '5XX':
+ *        $ref: '#/components/responses/Error/UnExpected'
  */
 routes.put('/:formSubmissionId/restore', hasSubmissionPermissions(P.SUBMISSION_DELETE), async (req, res, next) => {
   await controller.restore(req, res, next);
@@ -401,6 +420,8 @@ routes.put('/:formSubmissionId/restore', hasSubmissionPermissions(P.SUBMISSION_D
  *        $ref: '#/components/responses/Error/Forbidden'
  *      '404':
  *        $ref: '#/components/responses/Error/ResourceNotFound'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
  */
@@ -446,6 +467,8 @@ routes.get('/:formSubmissionId/options', async (req, res, next) => {
  *                - $ref: '#/components/schemas/respError/SubmissionIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/SubmissionAccessError'
  *                - $ref: '#/components/responses/Error/NoFormAccess'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
  */
@@ -498,8 +521,6 @@ routes.get('/:formSubmissionId/notes', hasSubmissionPermissions(P.SUBMISSION_REA
  *          application/json:
  *            schema:
  *              $ref: '#/components/responses/responseBody/SubmissionsNote'
- *      '403':
- *        $ref: '#/components/responses/Error/Forbidden'
  *      '401':
  *        description: Unauthorized
  *        content:
@@ -509,6 +530,10 @@ routes.get('/:formSubmissionId/notes', hasSubmissionPermissions(P.SUBMISSION_REA
  *                - $ref: '#/components/schemas/respError/SubmissionIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/SubmissionAccessError'
  *                - $ref: '#/components/responses/Error/NoFormAccess'
+ *      '403':
+ *        $ref: '#/components/responses/Error/Forbidden'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
  */
@@ -544,10 +569,6 @@ routes.post('/:formSubmissionId/notes', hasSubmissionPermissions(P.SUBMISSION_UP
  *          application/json:
  *            schema:
  *              $ref: '#/components/responses/responseBody/SubmissionsGetStatus'
- *      '403':
- *        $ref: '#/components/responses/Error/Forbidden'
- *      '404':
- *        $ref: '#/components/responses/Error/ResourceNotFound'
  *      '401':
  *        description: Unauthorized
  *        content:
@@ -557,6 +578,12 @@ routes.post('/:formSubmissionId/notes', hasSubmissionPermissions(P.SUBMISSION_UP
  *                - $ref: '#/components/schemas/respError/SubmissionIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/SubmissionAccessError'
  *                - $ref: '#/components/schemas/respError/InvalidAuthError'
+ *      '403':
+ *        $ref: '#/components/responses/Error/Forbidden'
+ *      '404':
+ *        $ref: '#/components/responses/Error/ResourceNotFound'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
  */
@@ -600,10 +627,6 @@ routes.get('/:formSubmissionId/status', apiAccess, hasSubmissionPermissions(P.SU
  *          application/json:
  *            schema:
  *              $ref: '#/components/responses/responseBody/SubmissionsAddStatus'
- *      '403':
- *        $ref: '#/components/responses/Error/Forbidden'
- *      '404':
- *        $ref: '#/components/responses/Error/NotFound'
  *      '401':
  *        description: Unauthorized
  *        content:
@@ -612,6 +635,12 @@ routes.get('/:formSubmissionId/status', apiAccess, hasSubmissionPermissions(P.SU
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/SubmissionIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/SubmissionAccessError'
+ *      '403':
+ *        $ref: '#/components/responses/Error/Forbidden'
+ *      '404':
+ *        $ref: '#/components/responses/Error/ResourceNotFound'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
  */
@@ -642,10 +671,6 @@ routes.post('/:formSubmissionId/status', hasSubmissionPermissions(P.SUBMISSION_U
  *    responses:
  *      '200':
  *        description: Success
- *      '403':
- *        $ref: '#/components/responses/Error/Forbidden'
- *      '404':
- *        $ref: '#/components/responses/Error/NotFound'
  *      '401':
  *        description: Unauthorized
  *        content:
@@ -654,6 +679,12 @@ routes.post('/:formSubmissionId/status', hasSubmissionPermissions(P.SUBMISSION_U
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/SubmissionIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/SubmissionAccessError'
+ *      '403':
+ *        $ref: '#/components/responses/Error/Forbidden'
+ *      '404':
+ *        $ref: '#/components/responses/Error/ResourceNotFound'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
  */
@@ -688,10 +719,6 @@ routes.post('/:formSubmissionId/email', hasSubmissionPermissions(P.SUBMISSION_RE
  *          application/json:
  *            schema:
  *              $ref: '#/components/responses/responseBody/SubmissionListEdits'
- *      '403':
- *        $ref: '#/components/responses/Error/Forbidden'
- *      '404':
- *        $ref: '#/components/responses/Error/NotFound'
  *      '401':
  *        description: Unauthorized
  *        content:
@@ -700,6 +727,12 @@ routes.post('/:formSubmissionId/email', hasSubmissionPermissions(P.SUBMISSION_RE
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/SubmissionIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/SubmissionAccessError'
+ *      '403':
+ *        $ref: '#/components/responses/Error/Forbidden'
+ *      '404':
+ *        $ref: '#/components/responses/Error/ResourceNotFound'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
  */
@@ -714,7 +747,7 @@ routes.post('/:formSubmissionId/template/render', hasSubmissionPermissions(P.SUB
 /**
  * @openapi
  * /submissions/{formSubmissionId}/{formId}/submissions:
- *  delete:
+ *  get:
  *    tags:
  *      - Submissions
  *    summary: Multiple (soft) delete form submissions.
@@ -776,10 +809,6 @@ routes.post('/:formSubmissionId/template/render', hasSubmissionPermissions(P.SUB
  *                  type: object
  *                  description: Version Details.
  *                  example: {}
- *      '403':
- *        $ref: '#/components/responses/Error/Forbidden'
- *      '404':
- *        $ref: '#/components/responses/Error/NotFound'
  *      '401':
  *        description: Unauthorized
  *        content:
@@ -793,6 +822,12 @@ routes.post('/:formSubmissionId/template/render', hasSubmissionPermissions(P.SUB
  *                - $ref: '#/components/schemas/respError/InvalidSubmissionIdError'
  *                - $ref: '#/components/schemas/respError/RequiredSubmissionPermissionError'
  *                - $ref: '#/components/schemas/respError/SubmissnDelOrRestorePermissnError'
+ *      '403':
+ *        $ref: '#/components/responses/Error/Forbidden'
+ *     '404':
+ *        $ref: '#/components/responses/Error/ResourceNotFound'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
  */

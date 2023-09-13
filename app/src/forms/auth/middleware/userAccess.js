@@ -11,6 +11,7 @@ const getToken = (req) => {
   try {
     return req.kauth.grant.access_token;
   } catch (err) {
+   
     return null;
   }
 };
@@ -29,6 +30,7 @@ const setUser = async (req, _res, next) => {
   }
 };
 
+
 const currentUser = async (req, res, next) => {
   // Check if authorization header is a bearer token
   if (req.headers && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
@@ -39,7 +41,6 @@ const currentUser = async (req, res, next) => {
       return new Problem(403, { detail: 'Authorization token is invalid.' }).send(res);
     }
   }
-
   return setUser(req, res, next);
 };
 

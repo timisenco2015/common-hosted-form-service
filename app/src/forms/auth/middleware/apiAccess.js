@@ -5,6 +5,7 @@ const { validate: uuidValidate } = require('uuid');
 const formService = require('../../form/service');
 const submissionService = require('../../submission/service');
 
+
 module.exports = async (req, res, next) => {
   try {
     // Check if authorization header is basic auth

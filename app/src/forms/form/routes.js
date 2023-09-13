@@ -139,12 +139,47 @@ routes.get('/:formId', apiAccess, hasFormPermissions(P.FORM_READ), async (req, r
  *        description: ID of the form.
  *        required: true
  *        example: c6455376-382c-439d-a811-0381a012d696
- *    requestBody:
- *      required: true
- *      content:
- *        application/json:
- *          schema:
- *            $ref: '#/components/requestBodies/FormReqSubmissionExport'
+ *      - in: query
+ *        name: format
+ *        schema:
+ *          type: string
+ *          description: Form submission export format/type. It can either be "csv" or "json"
+ *          example: csv
+ *          default: csv
+ *      - in: query
+ *        name: template
+ *        schema:
+ *          type: string
+ *          description: 'Chosen CSV format for the submission data exported. Use one of these templates 1) multiRowEmptySpacesCSVExport 2) multiRowBackFilledCSVExport 3) singleRowCSVExport 4) unFormattedCSVExport to export submission to CSV Note: use this parameter only if export format/type is csv'
+ *          example: multiRowEmptySpacesCSVExport
+ *          default: multiRowEmptySpacesCSVExport
+ *      - in: query
+ *        name: version
+ *        schema:
+ *          type: number
+ *          description: 'The version number of the form for the submission data exported. Note: use this parameter only if export format/type is csv'
+ *          example: 2
+ *          default: 1
+ *      - in: query
+ *        name: type
+ *        schema:
+ *          type: string
+ *          example: submissions
+ *          description: Default value is submissions and should not be changed.
+ *          default: submissions
+ *      - in: query
+ *        name: preference
+ *        schema:
+ *          type: object
+ *          description: Form submissions export preferences
+ *          example: { minDate: '2023-05-19T07:00:00Z', maxDate: '2023-06-19T06:59:59Z' }
+ *      - in: query
+ *        name: emailExport
+ *        schema:
+ *          type: boolean
+ *          example: true
+ *          description: If set to true, an email will the export will be sent rather than users downloading the export directly.
+ *          default: false
  *    responses:
  *      '200':
  *        description: Success
@@ -315,7 +350,6 @@ routes.get('/:formId/version', apiAccess, hasFormPermissions(P.FORM_READ), async
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *                - $ref: '#/components/schemas/respError/InvalidAuthError'
  *      '5XX':
@@ -359,7 +393,6 @@ routes.put('/:formId', apiAccess, hasFormPermissions([P.FORM_READ, P.FORM_UPDATE
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *                - $ref: '#/components/schemas/respError/InvalidAuthError'
  *      '5XX':
@@ -418,6 +451,41 @@ routes.delete('/:formId', apiAccess, hasFormPermissions([P.FORM_READ, P.FORM_DEL
  *        description: The endpoint will filter the form submissions using the start and end date in createdAt.
  *        default: ['1973-06-18 07:02:45', '2073-06-18 07:02:45']
  *        example: ['1973-06-18 07:02:45', '2073-06-18 07:02:45']
+ *      - in: query
+ *        name: page
+ *        schema:
+ *          type: number
+ *        description: This parameter is used for pagination. This page number with itemsPerPage will be used to calculate the range of submissions to be fetched
+ *        example: 0
+ *      - in: query
+ *        name: filterformSubmissionStatusCode
+ *        schema:
+ *          type: boolean
+ *        description: Set this parameter to true to filter out submissions status codes with null values.
+ *        default: false
+ *      - in: query
+ *        name: itemsPerPage
+ *        schema:
+ *          type: number
+ *        description: This is paramter is used for pagination. This the number of submissions per page
+ *        example: 10
+ *      - in: query
+ *        name: totalSubmissions
+ *        schema:
+ *          type: number
+ *        description: This parameter is used for pagination. This is mainly used for CHEFS.
+ *      - in: query
+ *        name: sortDesc
+ *        schema:
+ *          type: boolean
+ *        description: This parameter is used for pagination. It sorts the submissions in descending order if set to true.
+ *        example: true
+ *      - in: query
+ *        name: sortBy
+ *        schema:
+ *          type: string
+ *        description: This parameter is used for pagination. It sorts submissions based on the column(submission field) specified.
+ *        example: confirmationId
  *    responses:
  *      '200':
  *        description: Success
@@ -435,9 +503,10 @@ routes.delete('/:formId', apiAccess, hasFormPermissions([P.FORM_READ, P.FORM_DEL
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *                - $ref: '#/components/schemas/respError/InvalidAuthError'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
  */
@@ -445,9 +514,6 @@ routes.get('/:formId/submissions', apiAccess, hasFormPermissions([P.FORM_READ, P
   await controller.listFormSubmissions(req, res, next);
 });
 
-// routes.post('/:formId/versions', apiAccess, hasFormPermissions([P.FORM_READ]), async (req, res, next) => {
-//   next(new Problem(410, { detail: 'This method is deprecated, use /forms/id/drafts to create form versions.' }));
-// });
 
 /**
  * @openapi
@@ -497,7 +563,6 @@ routes.get('/:formId/submissions', apiAccess, hasFormPermissions([P.FORM_READ, P
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *                - $ref: '#/components/schemas/respError/InvalidAuthError'
  *      '5XX':
@@ -557,7 +622,6 @@ routes.get('/:formId/versions/:formVersionId', apiAccess, hasFormPermissions([P.
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *                - $ref: '#/components/schemas/respError/InvalidAuthError'
  *      '5XX':
@@ -566,9 +630,6 @@ routes.get('/:formId/versions/:formVersionId', apiAccess, hasFormPermissions([P.
 routes.get('/:formId/versions/:formVersionId/fields', apiAccess, hasFormPermissions([P.FORM_READ]), async (req, res, next) => {
   await controller.readVersionFields(req, res, next);
 });
-// routes.put('/:formId/versions/:formVersionId', apiAccess, hasFormPermissions([P.FORM_READ]), async (req, res, next) => {
-//   next(new Problem(410, { detail: 'This method is deprecated, use /forms/id/drafts to modify form versions.' }));
-// });
 
 /**
  * @openapi
@@ -592,11 +653,11 @@ routes.get('/:formId/versions/:formVersionId/fields', apiAccess, hasFormPermissi
  *        required: true
  *        example: c6455376-382c-439d-a811-0381a012d696
  *      - in: path
- *        name: formVersionDraftId
+ *        name: formVersionId
  *        schema:
  *          type: string
  *          format: uuid
- *        description: Form version draft ID.
+ *        description: Form version ID.
  *        required: true
  *        example: c6455376-382c-439d-a811-0381a012d696
  *      - in: query
@@ -623,7 +684,6 @@ routes.get('/:formId/versions/:formVersionId/fields', apiAccess, hasFormPermissi
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *                - $ref: '#/components/schemas/respError/InvalidAuthError'
  *      '5XX':
@@ -638,7 +698,7 @@ routes.post('/:formId/versions/:formVersionId/publish', apiAccess, hasFormPermis
  * /forms/{formId}/versions/{formVersionId}/submissions:
  *  get:
  *    tags:
- *      - Forms
+ *      - Submissions
  *    summary: List submissions from a form version
  *    description: This endpoint will fecth list of submissions for the form version.
  *    security:
@@ -698,7 +758,6 @@ routes.post('/:formId/versions/:formVersionId/publish', apiAccess, hasFormPermis
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *                - $ref: '#/components/schemas/respError/InvalidAuthError'
  *      '5XX':
@@ -713,7 +772,7 @@ routes.get('/:formId/versions/:formVersionId/submissions', apiAccess, hasFormPer
  * /forms/{formId}/versions/{formVersionId}/submissions:
  *  post:
  *    tags:
- *      - Forms
+ *      - Submissions
  *    summary: Create a new form submission
  *    description: This endpoint will create form submission.
  *    security:
@@ -760,7 +819,6 @@ routes.get('/:formId/versions/:formVersionId/submissions', apiAccess, hasFormPer
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *                - $ref: '#/components/schemas/respError/InvalidAuthError'
  *      '5XX':
@@ -770,6 +828,77 @@ routes.post('/:formId/versions/:formVersionId/submissions', apiAccess, hasFormPe
   await controller.createSubmission(req, res, next);
 });
 
+/**
+ * @openapi
+ * /forms/{formId}/versions/{formVersionId}/multiSubmission:
+ *  post:
+ *    tags:
+ *      - Draft
+ *    summary: Upload multiple draft submissions
+ *    description: This endpoint upload multiple draft submissions.
+ *    security:
+ *      - basicAuth: []
+ *      - bearerAuth: []
+ *        openId: []
+ *    parameters:
+ *      - in: path
+ *        name: formId
+ *        schema:
+ *          type: string
+ *          format: uuid
+ *        description: Form ID.
+ *        required: true
+ *        example: c6455376-382c-439d-a811-0381a012d696
+ *      - in: path
+ *        name: formVersionId
+ *        schema:
+ *          type: string
+ *          format: uuid
+ *        description: Form version ID.
+ *        required: true
+ *        example: c6455376-382c-439d-a811-0381a012d696
+ *    requestBody:
+ *      required: true
+ *      content:
+ *        application/json:
+ *          schema:
+ *            type: object
+ *            properties:
+ *              draft:
+ *                type: boolean
+ *                description:
+ *                default: false
+ *                example: false
+ *              submission:
+ *                type: object
+ *                description: this object should contain one property named data as an array. This array named data should store all the multiple drafts as object in this array.
+ *                properties:
+ *                  data:
+ *                    type: array
+ *                    description: this is an array of multiple objects, each object contain data of single the form submissions.
+ *                    example: [{}]
+ *    responses:
+ *      '200':
+ *        description: Success
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/responses/responseBody/FormCreateFormSubmission'
+ *      '403':
+ *        $ref: '#/components/responses/Error/Forbidden'
+ *      '401':
+ *        description: Unauthorized
+ *        content:
+ *          application/json:
+ *            schema:
+ *              oneOf:
+ *                - $ref: '#/components/schemas/respError/NoFormAccessError'
+ *                - $ref: '#/components/schemas/respError/UserNotFoundError'
+ *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
+ *                - $ref: '#/components/schemas/respError/InvalidAuthError'
+ *      '5XX':
+ *        $ref: '#/components/responses/Error/UnExpected'
+ */
 routes.post(
   '/:formId/versions/:formVersionId/multiSubmission',
   middleware.publicRateLimiter,
@@ -780,9 +909,66 @@ routes.post(
   }
 );
 
-/*
-Suggested for clean up
-*/
+/**
+ * @openapi
+ * /forms/{formId}/versions/{formVersionId}/submissions/discover:
+ *  get:
+ *    tags:
+ *      - Forms
+ *    summary: List all the submission Ids for the form submissions.
+ *    description: This endpoint will list all the submission Ids for the form submissions.
+ *    security:
+ *      - basicAuth: []
+ *      - bearerAuth: []
+ *        openId: []
+ *    parameters:
+ *      - in: path
+ *        name: formId
+ *        schema:
+ *          type: string
+ *          format: uuid
+ *        description: Form ID.
+ *        required: true
+ *        example: c6455376-382c-439d-a811-0381a012d696
+ *      - in: path
+ *        name: formVersionId
+ *        schema:
+ *          type: string
+ *          format: uuid
+ *        description: Form version ID.
+ *        required: true
+ *        example: c6455376-382c-439d-a811-0381a012d696
+ *    responses:
+ *      '200':
+ *        description: Success
+ *        content:
+ *          application/json:
+ *            schema:
+ *              type: array
+ *              items:
+ *                type: object
+ *                properties:
+ *                  id:
+ *                    type: string
+ *                    description: submission ID.
+ *                    example: "bd877006-8ff1-49bf-927d-d7a0de834842"
+ *      '403':
+ *        $ref: '#/components/responses/Error/Forbidden'
+ *      '401':
+ *        description: Unauthorized
+ *        content:
+ *          application/json:
+ *            schema:
+ *              oneOf:
+ *                - $ref: '#/components/schemas/respError/NoFormAccessError'
+ *                - $ref: '#/components/schemas/respError/UserNotFoundError'
+ *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
+ *                - $ref: '#/components/schemas/respError/InvalidAuthError'
+ *      '422':
+ *        $ref: '#/components/responses/Error/UnprocessableEntity'
+ *      '5XX':
+ *        $ref: '#/components/responses/Error/UnExpected'
+ */
 routes.get('/:formId/versions/:formVersionId/submissions/discover', apiAccess, hasFormPermissions([P.FORM_READ, P.SUBMISSION_READ]), (req, res, next) => {
   controller.listSubmissionFields(req, res, next);
 });
@@ -833,7 +1019,6 @@ routes.get('/:formId/versions/:formVersionId/submissions/discover', apiAccess, h
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *                - $ref: '#/components/schemas/respError/InvalidAuthError'
  *      '5XX':
@@ -945,7 +1130,6 @@ routes.post('/:formId/drafts', apiAccess, hasFormPermissions([P.FORM_READ, P.DES
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *                - $ref: '#/components/schemas/respError/InvalidAuthError'
  *      '5XX':
@@ -1009,7 +1193,6 @@ routes.get('/:formId/drafts/:formVersionDraftId', apiAccess, hasFormPermissions(
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *                - $ref: '#/components/schemas/respError/InvalidAuthError'
  *      '5XX':
@@ -1063,7 +1246,6 @@ routes.put('/:formId/drafts/:formVersionDraftId', apiAccess, hasFormPermissions(
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *                - $ref: '#/components/schemas/respError/InvalidAuthError'
  *      '5XX':
@@ -1127,7 +1309,6 @@ routes.delete('/:formId/drafts/:formVersionDraftId', apiAccess, hasFormPermissio
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *                - $ref: '#/components/schemas/respError/InvalidAuthError'
  *      '5XX':
@@ -1174,7 +1355,6 @@ routes.post('/:formId/drafts/:formVersionDraftId/publish', apiAccess, hasFormPer
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *                - $ref: '#/components/schemas/respError/InvalidAuthError'
  *      '5XX':
@@ -1221,7 +1401,6 @@ routes.get('/:formId/statusCodes', apiAccess, hasFormPermissions([P.FORM_READ]),
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
@@ -1309,7 +1488,6 @@ routes.put('/:formId/apiKey', hasFormPermissions(P.FORM_API_CREATE), async (req,
  *              oneOf:
  *                - $ref: '#/components/schemas/respError/NoFormAccessError'
  *                - $ref: '#/components/schemas/respError/UserNotFoundError'
- *                - $ref: '#/components/schemas/respError/FormIdNotFoundError'
  *                - $ref: '#/components/schemas/respError/NoRequiredFormPermissionError'
  *      '5XX':
  *        $ref: '#/components/responses/Error/UnExpected'
@@ -1322,25 +1500,25 @@ routes.delete('/:formId/apiKey', hasFormPermissions(P.FORM_API_DELETE), async (r
  * @openapi
  * /forms/formcomponents/proactivehelp/list:
  *  get:
- *   tags:
- *    - Forms
- *   summary: Get list of all the proactive help details
- *   description: This endpoint will fetch the list of all the proactive help details.
- *   security:
- *    - basicAuth: []
- *    - bearerAuth: []
- *      openId: []
- *   responses:
- *    '200':
- *      description: Success
- *      content:
- *        application/json:
- *          schema:
- *            $ref: '#/components/responses/responseBody/FormProactiveHelpList'
- *    '403':
- *      $ref: '#/components/responses/Error/AccessDenied'
- *    '5XX':
- *      $ref: '#/components/responses/Error/UnExpected'
+ *    tags:
+ *      - Forms
+ *    summary: Get list of all the proactive help details
+ *    description: This endpoint will fetch the list of all the proactive help details.
+ *    security:
+ *      - basicAuth: []
+ *      - bearerAuth: []
+ *        openId: []
+ *    responses:
+ *      '200':
+ *        description: Success
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/responses/responseBody/FormProactiveHelpList'
+ *      '403':
+ *        $ref: '#/components/responses/Error/AccessDenied'
+ *      '5XX':
+ *        $ref: '#/components/responses/Error/UnExpected'
  */
 routes.get('/formcomponents/proactivehelp/list', async (req, res, next) => {
   await controller.listFormComponentsProactiveHelp(req, res, next);
@@ -1350,63 +1528,63 @@ routes.get('/formcomponents/proactivehelp/list', async (req, res, next) => {
  * @openapi
  * /forms/{formId}/csvexport/fields:
  *  get:
- *   tags:
- *    - Forms
- *   summary: Get list of form version fields
- *   description: This endpoint will fetch the list of form version fields.
- *   security:
- *    - basicAuth: []
- *    - bearerAuth: []
- *      openId: []
- *   parameters:
- *    - in: path
- *      name: formId
- *      schema:
- *        type: string
- *        format: uuid
+ *    tags:
+ *      - Forms
+ *    summary: Get list of form version fields
+ *    description: This endpoint will fetch the list of form version fields.
+ *    security:
+ *      - basicAuth: []
+ *      - bearerAuth: []
+ *        openId: []
+ *    parameters:
+ *      - in: path
+ *        name: formId
+ *        schema:
+ *          type: string
+ *          format: uuid
  *        description: ID of the form.
  *        required: true
  *        example: c6455376-382c-439d-a811-0381a012d696
- *    - in: query
- *      name: draft
- *      schema:
- *        type: boolean
+ *      - in: query
+ *        name: draft
+ *        schema:
+ *          type: boolean
  *        description: draft status of the submission.
  *        required: true
  *        example: false
- *    - in: query
- *      name: deleted
- *      schema:
- *        type: boolean
+ *      - in: query
+ *        name: deleted
+ *        schema:
+ *          type: boolean
  *        description: delete status of the form.
  *        example: false
  *        required: true
- *    - in: query
- *      name: version
- *      schema:
- *        type: number
+ *      - in: query
+ *        name: version
+ *        schema:
+ *          type: number
  *        description: The form version.
  *        example: 2
- *    - in: query
- *      name: type
- *      schema:
- *        type: string
+ *      - in: query
+ *        name: type
+ *        schema:
+ *          type: string
  *        description: default value is submissions.
  *        example: submissions
  *        default: submissions
- *   responses:
- *    '200':
- *      description: Success
- *      content:
- *        application/json:
- *          schema:
- *    '401':
- *      $ref: '#/components/responses/Error/NoFormAccess'
- *    '403':
- *      $ref: '#/components/responses/Error/AccessDenied'
- *    '5XX':
- *      $ref: '#/components/responses/Error/UnExpected'
- *    '404':
+ *    responses:
+ *      '200':
+ *        description: Success
+ *        content:
+ *          application/json:
+ *            schema:
+ *      '401':
+ *        $ref: '#/components/responses/Error/NoFormAccess'
+ *      '403':
+ *        $ref: '#/components/responses/Error/AccessDenied'
+ *      '5XX':
+ *        $ref: '#/components/responses/Error/UnExpected'
+ *      '404':
  *        $ref: '#/components/responses/Error/ResourceNotFound'
  */
 routes.get('/:formId/csvexport/fields', middleware.publicRateLimiter, apiAccess, hasFormPermissions([P.FORM_READ]), async (req, res, next) => {
@@ -1417,38 +1595,38 @@ routes.get('/:formId/csvexport/fields', middleware.publicRateLimiter, apiAccess,
  * @openapi
  * /forms/formcomponents/proactivehelp/imageUrl/{componentId}:
  *  get:
- *   tags:
- *    - Forms
- *   summary: Get the image of the form.io component proactive help
- *   description: This endpoint will get the image of the form.io component proactive help.
- *   security:
- *    - basicAuth: []
- *    - bearerAuth: []
- *      openId: []
- *   parameters:
- *    - in: path
- *      name: componentId
- *      schema:
- *        type: string
- *      description: Id of the Form.io component. This is a database generated Id.
- *      required: true
- *      example: true
- *   responses:
- *    '200':
- *      description: Success
- *      content:
- *        image/png:
- *          schema:
- *            type: object
- *            properties:
- *              url:
- *                type: string
- *                format: binary
- *    '403':
- *      $ref: '#/components/responses/Error/AccessDenied'
- *    '5XX':
- *      $ref: '#/components/responses/Error/UnExpected'
- *    '404':
+ *    tags:
+ *      - Forms
+ *    summary: Get the image of the form.io component proactive help
+ *    description: This endpoint will get the image of the form.io component proactive help.
+ *    security:
+ *      - basicAuth: []
+ *      - bearerAuth: []
+ *        openId: []
+ *    parameters:
+ *      - in: path
+ *        name: componentId
+ *        schema:
+ *          type: string
+ *        description: Id of the Form.io component. This is a database generated Id.
+ *        required: true
+ *        example: true
+ *    responses:
+ *      '200':
+ *        description: Success
+ *        content:
+ *          image/png:
+ *            schema:
+ *              type: object
+ *              properties:
+ *                url:
+ *                  type: string
+ *                  format: binary
+ *      '403':
+ *        $ref: '#/components/responses/Error/AccessDenied'
+ *      '5XX':
+ *        $ref: '#/components/responses/Error/UnExpected'
+ *      '404':
  *        $ref: '#/components/responses/Error/ResourceNotFound'
  */
 routes.get('/formcomponents/proactivehelp/imageUrl/:componentId', async (req, res, next) => {
